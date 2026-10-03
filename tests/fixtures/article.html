@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sample</title></head>
+<body>
+<!-- claude.dev の記事ページと同じ構造を模した自作のサンプル。文章はテスト用のダミー -->
+<div class="prose" id="body">
+<section class="art-section" id="s0">
+<p>Intro with <code>inline_code()</code>, <strong>bold</strong>, <em>italic</em> and a <a href="https://example.com/docs">link</a>.</p>
+<p>See the <a href="#step-two">second step</a> and <a href="/blog/other/">another post</a> · café.</p>
+<figure class="art-fig art-video art-video-tabs">
+<div class="fig-tabs" role="tablist"><button type="button">Tab A</button><button type="button">Tab B</button></div>
+<div role="tabpanel"><video class="fg" controls src="/media/aaa.mp4"></video></div>
+<figcaption class="cap"><b>FIG A</b><span>A sample video caption.</span></figcaption>
+</figure>
+</section>
+<section class="art-section" id="s1">
+<h2 id="step-two">STEP TWO</h2>
+<h3>Sub heading</h3>
+<h4>Small heading</h4>
+<ul>
+<li>First item</li>
+<li>Second item with <code>code</code>
+<ul><li>Nested item</li></ul>
+</li>
+</ul>
+<ol><li>One</li><li>Two</li></ol>
+<div class="art-code">
+<div class="ch"><span>CODE <span class="lang">TypeScript</span></span><button type="button">Copy</button></div>
+<pre><span class="kw">const</span> <span class="pl">x</span> = <span class="nm">1</span>;
+<span class="cm">// keep &lt;tags&gt; as is</span>
+</pre>
+</div>
+<div class="art-code art-prompt">
+<div class="ch"><span>PROMPT</span><button type="button">Copy</button></div>
+<pre>/do-something now</pre>
+</div>
+<figure class="art-fig art-diagram">
+<div class="fig-head"><div class="fig-head-row"><div class="fig-title">How it flows</div><button class="fig-dl">Download</button></div><div class="fig-sub">Sub</div></div>
+<div class="fig-draw"><svg viewBox="0 0 10 10"><text>label</text></svg></div>
+</figure>
+<div class="art-table">
+<table>
+<thead><tr><th>Name</th><th>Value</th></tr></thead>
+<tbody><tr><td><code>a</code></td><td>first</td></tr><tr><td>b</td><td><strong>second</strong></td></tr></tbody>
+</table>
+</div>
+<figure class="art-fig">
+<img class="fg" src="/media/bbb.png" alt="x">
+<figcaption class="cap"><b>FIG B</b><span>An image caption.</span></figcaption>
+</figure>
+<blockquote class="q-block q-excerpt"><p>A quoted sentence.</p></blockquote>
+<figure class="art-fig art-thread">
+<div class="slack"><ol>
+<li class="msg"><div class="av"></div><div><div class="mh"><b>Sam</b><time class="tm">12:34 PM</time></div><div class="mx"><p>Hello there.</p></div></div></li>
+</ol></div>
+<figcaption class="cap"><span>Thread caption.</span></figcaption>
+</figure>
+</section>
+</div>
+</body></html>

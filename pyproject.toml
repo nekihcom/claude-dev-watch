@@ -1,0 +1,29 @@
+[project]
+name = "claude-dev-watch"
+version = "0.1.0"
+description = "claude.dev ブログの新着記事を DeepL で日本語訳して Notion に登録する"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "deepl>=1.18",
+    "feedparser>=6.0",
+    "notion-client>=2.2",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+claude-dev-watch = "claude_dev_watch.main:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
