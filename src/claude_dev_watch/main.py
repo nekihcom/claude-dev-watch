@@ -23,6 +23,9 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     load_env()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    # 通信ごとに INFO を出すライブラリがあり、処理の要点が埋もれるため警告以上だけにする
+    for name in ("deepl", "httpx", "httpcore", "notion_client", "urllib3"):
+        logging.getLogger(name).setLevel(logging.WARNING)
 
     entries = fetch_entries()
     log.info("RSS の記事数: %d", len(entries))
