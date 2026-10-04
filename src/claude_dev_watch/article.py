@@ -1,4 +1,4 @@
-"""記事ページの HTML から本文を取り出し、Notion にも Markdown にも変換できる中間表現にする。
+"""記事ページの HTML から本文を取り出し、HTML にも Markdown にも変換できる中間表現にする。
 
 サイトの HTML 構造に依存する処理はこのモジュールに閉じ込める。構造が変わったときの修正範囲を絞るため。
 """
@@ -16,7 +16,7 @@ from . import USER_AGENT
 
 log = logging.getLogger(__name__)
 
-# 翻訳後に Notion の rich_text へ変換できるインライン要素だけを残す
+# 翻訳と出力で扱えるインライン要素だけを残す。それ以外のタグは中身のテキストだけにする
 INLINE_TAGS = {"a", "code", "strong", "b", "em", "i", "br"}
 
 
@@ -81,7 +81,7 @@ class Table:
 
 @dataclass
 class Note:
-    """Notion で再現できない図（SVG・インタラクティブな可視化など）の代わりに置く注記。"""
+    """再現できない図（SVG・インタラクティブな可視化など）の代わりに置く注記。原文の参照を促す。"""
 
     label: Text
     caption: Text | None
@@ -123,7 +123,6 @@ def _convert(el: Tag, base: str) -> list[Block]:
     name = el.name
 
     if name in ("h2", "h3", "h4"):
-        # Notion の見出しは 3 段階までなので、h4 は heading_3 に寄せる
         return [Heading(min(int(name[1]) - 1, 3), _inline(el, base))]
     if name == "p":
         text = _inline(el, base)
