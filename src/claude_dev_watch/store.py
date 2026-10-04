@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .article import Block, Code, Heading, Image, ListBlock, ListItem, Note, Paragraph, Quote, Table, Text, Video
+from .article import Block, Code, Diagram, Heading, Image, ListBlock, ListItem, Note, Paragraph, Quote, Table, Text, Video
 from .feed import Entry
 
 
@@ -39,8 +39,10 @@ class ContentStore:
         return {a.entry.url for a in self.load_all()}
 
     def save(self, entry: Entry, title_ja: str, summary_ja: str, blocks: list[Block]) -> Path:
+        return self.write(StoredArticle(entry, title_ja, summary_ja, blocks, datetime.now(timezone.utc)))
+
+    def write(self, article: StoredArticle) -> Path:
         self._root.mkdir(parents=True, exist_ok=True)
-        article = StoredArticle(entry, title_ja, summary_ja, blocks, datetime.now(timezone.utc))
         path = self._root / f"{article.slug}.json"
         # 一時ファイル経由で置き換えるのは、書き込み途中で落ちたときに壊れた JSON を残さないため
         tmp = path.with_suffix(".json.tmp")
@@ -114,6 +116,8 @@ def _dump_block(b: Block) -> dict:
             return {"type": "video", "url": url, "caption": _text(c)}
         case Table(rows=rows, has_header=has_header):
             return {"type": "table", "has_header": has_header, "rows": [[c.html for c in r] for r in rows]}
+        case Diagram(label=label, caption=c, svgs=svgs, description=desc):
+            return {"type": "diagram", "label": label.html, "caption": _text(c), "svgs": svgs, "description": desc}
         case Note(label=label, caption=c):
             return {"type": "note", "label": label.html, "caption": _text(c)}
     raise TypeError(f"未対応のブロック: {b!r}")
@@ -142,6 +146,8 @@ def _load_block(d: dict) -> Block:
             return Video(d["url"], _opt(d["caption"]))
         case "table":
             return Table([[Text(c) for c in r] for r in d["rows"]], d["has_header"])
+        case "diagram":
+            return Diagram(Text(d["label"]), _opt(d["caption"]), d["svgs"], d["description"])
         case "note":
             return Note(Text(d["label"]), _opt(d["caption"]))
     raise ValueError(f"未対応のブロック種別: {d['type']}")

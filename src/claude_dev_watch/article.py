@@ -13,6 +13,7 @@ import requests
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 
 from . import USER_AGENT
+from .svg import sanitize_svg
 
 log = logging.getLogger(__name__)
 
@@ -80,14 +81,26 @@ class Table:
 
 
 @dataclass
+class Diagram:
+    """原文のインライン SVG の図。図中の文字は訳さず、タイトルとキャプションだけを訳す。"""
+
+    label: Text
+    caption: Text | None
+    # 原文は画面幅に応じて描き分けた SVG（wide / narrow）を持つため、すべて残す。無害化済みのマークアップ
+    svgs: list[str]
+    # 読み上げ用の説明。図中の文字と同じく訳さない
+    description: str
+
+
+@dataclass
 class Note:
-    """再現できない図（SVG・インタラクティブな可視化など）の代わりに置く注記。原文の参照を促す。"""
+    """再現できない図（インタラクティブな可視化など）の代わりに置く注記。原文の参照を促す。"""
 
     label: Text
     caption: Text | None
 
 
-Block = Heading | Paragraph | ListBlock | Code | Quote | Image | Video | Table | Note
+Block = Heading | Paragraph | ListBlock | Code | Quote | Image | Video | Table | Diagram | Note
 
 
 class ArticleParseError(Exception):
@@ -214,6 +227,12 @@ def _figure(el: Tag, base: str, classes: set[str]) -> list[Block]:
     if "art-diagram" in classes or "viz" in classes or el.find("svg"):
         title = el.select_one(".fig-title")
         label = _inline(title, base) if title else Text("")
+        if "art-diagram" in classes:
+            draw = el.select_one(".fig-draw")
+            svgs = [s for s in (sanitize_svg(str(svg)) for svg in (draw or el).find_all("svg")) if s]
+            if svgs:
+                description = draw.get("aria-label", "") if draw else ""
+                return [Diagram(label=label, caption=caption, svgs=svgs, description=description)]
         return [Note(label=label, caption=caption)]
 
     img = el.find("img", src=True)
@@ -279,7 +298,7 @@ def iter_texts(blocks: list[Block]):
                 for item in items:
                     yield item.text
                     yield from iter_texts(item.children)
-            case Note(label=label, caption=c):
+            case Note(label=label, caption=c) | Diagram(label=label, caption=c):
                 if label.html:
                     yield label
                 if c is not None:

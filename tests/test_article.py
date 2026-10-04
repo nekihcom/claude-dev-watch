@@ -5,6 +5,7 @@ import pytest
 from claude_dev_watch.article import (
     ArticleParseError,
     Code,
+    Diagram,
     Heading,
     Image,
     ListBlock,
@@ -31,7 +32,7 @@ def test_block_order(blocks):
     assert kinds == [
         "Paragraph", "Paragraph", "Video",
         "Heading", "Heading", "Heading",
-        "ListBlock", "ListBlock", "Code", "Code", "Note", "Table", "Image", "Quote",
+        "ListBlock", "ListBlock", "Code", "Code", "Diagram", "Note", "Table", "Image", "Quote",
         "Quote", "Paragraph",
     ]  # fmt: skip
 
@@ -70,15 +71,23 @@ def test_code_is_raw_text_with_language(blocks):
 
 
 def test_figures(blocks):
-    video, note, image = blocks[2], blocks[10], blocks[12]
+    video, diagram, note, image = blocks[2], blocks[10], blocks[11], blocks[13]
     assert isinstance(video, Video) and video.url == "https://claude.dev/media/aaa.mp4"
     assert video.caption.html == "<b>FIG A</b> A sample video caption."
-    assert isinstance(note, Note) and note.label.html == "How it flows"
+    assert isinstance(diagram, Diagram) and diagram.label.html == "How it flows"
+    assert diagram.description == "Flow from A to B"
+    # 画面幅ごとに描き分けた SVG を両方残し、スクリプトは取り除く
+    assert len(diagram.svgs) == 2
+    assert diagram.svgs[0].startswith('<svg class="art-diagram-wide" viewBox="0 0 10 10">')
+    assert "alert" not in diagram.svgs[0]
+    assert '<text style="fill:var(--ink)">label</text>' in diagram.svgs[0]
+    # インタラクティブな図は再現できないため注記のままにする
+    assert isinstance(note, Note) and note.label.html == "Interactive"
     assert isinstance(image, Image) and image.url == "https://claude.dev/media/bbb.png"
 
 
 def test_table(blocks):
-    table = blocks[11]
+    table = blocks[12]
     assert isinstance(table, Table) and table.has_header
     assert [[c.html for c in r] for r in table.rows] == [
         ["Name", "Value"],
@@ -88,14 +97,16 @@ def test_table(blocks):
 
 
 def test_quotes_and_thread(blocks):
-    assert isinstance(blocks[13], Quote) and blocks[13].text.html == "A quoted sentence."
-    assert blocks[14].text.html == "<strong>Sam</strong>: Hello there."
+    assert isinstance(blocks[14], Quote) and blocks[14].text.html == "A quoted sentence."
+    assert blocks[15].text.html == "<strong>Sam</strong>: Hello there."
 
 
 def test_code_is_not_translation_target(blocks):
     texts = [t.html for t in iter_texts(blocks)]
     assert not any("const x" in t for t in texts)
     assert "How it flows" in texts
+    # 図中の文字は訳さない
+    assert not any("label" in t or "narrow" in t for t in texts)
 
 
 def test_missing_body_raises():

@@ -50,6 +50,9 @@ API キーなどはリポジトリ直下の `.env`（`.env.example` を参照）
 
 # content/ からサイトを _site/ に生成する
 .venv/bin/claude-dev-watch build-site
+
+# 保存済みの訳文の図（SVG）を原文から補う（DeepL は呼ばない）
+.venv/bin/claude-dev-watch refresh-figures
 open _site/index.html
 ```
 

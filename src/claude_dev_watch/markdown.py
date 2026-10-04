@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-from .article import Block, Code, Heading, Image, ListBlock, Note, Paragraph, Quote, Table, Video
+from .article import Block, Code, Diagram, Heading, Image, ListBlock, Note, Paragraph, Quote, Table, Video
 from .feed import Entry
 
 
@@ -42,7 +42,8 @@ def _block(b: Block) -> list[str]:
             return [f"![{inline(c.html) if c else ''}]({url})"]
         case Video(url=url, caption=c):
             return [f"▶ [動画（原文サイト）]({url}) {inline(c.html) if c else ''}"]
-        case Note(label=label, caption=c):
+        # Markdown は構造確認用のため、図は埋め込まずに注記のままにする
+        case Note(label=label, caption=c) | Diagram(label=label, caption=c):
             parts = [inline(x.html) for x in (label, c) if x and x.html]
             return [f"> 🖼️ 図（原文を参照）{'：' + ' — '.join(parts) if parts else ''}"]
         case Table(rows=rows, has_header=has_header):

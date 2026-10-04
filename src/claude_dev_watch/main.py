@@ -10,6 +10,7 @@ from .article import fetch_html, iter_texts, parse_article
 from .config import load_env
 from .feed import Entry, fetch_entries
 from .markdown import inline, render
+from .refresh import refresh_figures
 from .site import build
 from .store import ContentStore, slug_of
 from .translate import DeepLTranslator, IdentityTranslator, Translator, count_characters
@@ -30,6 +31,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "build-site":
         build(Path(args.content), Path(args.site_out))
+        return 0
+    if args.command == "refresh-figures":
+        refresh_figures(ContentStore(Path(args.content)))
         return 0
 
     entries = fetch_entries()
@@ -134,6 +138,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     sub = p.add_subparsers(dest="command")
     site = sub.add_parser("build-site", help="保存した訳文から GitHub Pages 用のサイトを生成する")
     site.add_argument("--site-out", default="_site", help="サイトの出力先（既定: _site）")
+    sub.add_parser("refresh-figures", help="保存済みの訳文の図を原文から補う（DeepL は呼ばない）")
     p.add_argument("--dry-run", action="store_true", help="訳文を保存せず、Markdown をローカルに出力する")
     p.add_argument("--limit", type=int, help="処理する記事数の上限（古い順）")
     p.add_argument("--url", help="指定した URL の記事だけを処理する")
