@@ -1,0 +1,599 @@
+{
+  "url": "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+  "title": "Getting the most out of Opus 5.5 in Claude and Claude Code",
+  "title_ja": "ClaudeおよびClaude CodeでOpus 5.5を最大限に活用する",
+  "published": "2026-09-22T12:00:00+00:00",
+  "author": "Addy Osmani",
+  "category": "Playbooks",
+  "summary": "How to prompt Opus 5.5, steer a long run, and check your results in Claude apps and Claude Code.",
+  "summary_ja": "Opus 5.5 を起動し、長期実行を管理し、ClaudeアプリおよびClaude Codeで結果を確認する方法。",
+  "translated_at": "2026-10-04T01:18:34.501452+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Opus 5.5 は、Claude を現在お使いの使い方とよく合います。 ただし、いくつかの点で動作が異なります。具体的には、単独での実行時間が長くなり、実行内容を明確に表示し、返信のたびに慎重に検討を行うようになっています。このガイドでは、ClaudeアプリおよびClaude CodeにおけるOpus 5.5の活用方法について解説します。これには、モデルへのプロンプトの指定方法、長時間の実行の制御方法、結果の確認方法などが含まれます。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "まずはこれを試してみてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 を初めて使う際に試してみたい3つのこと</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "タスク全体を任せてください。「完了」とはどのような状態か、いつ終了してほしいかを伝え、確認してください。あとは任せておきましょう。",
+          "children": []
+        },
+        {
+          "text": "「よく考えて」という行を削除してください。Opus 5.5 では、返信するたびにすでに検討が行われています。",
+          "children": []
+        },
+        {
+          "text": "長距離走が終わったら、まずはその走りがあなたに何を求めているのかをよく考えてみてください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "1. 尋ね方"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "「完了」の状態がどのようなものかを明確にし、あとはそのまま実行させる"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>タスク全体を1つのメッセージで伝えましょう。「テストに合格する」や「すべてのエンドポイントが移行される」といった、達成すべき目標を明確に示します。あとは、しばらく様子を見ましょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>Opus<strong> </strong>5.5<strong>は</strong>、Opus 5よりも、長時間にわたる複数パートからなる作業をスムーズに処理し続けます。以前のOpusモデルと比較して、最大の改善点は、大規模なリポジトリ全体に変更を反映させ、テストがパスするまで処理を続けるといった、多段階の作業において見られます。 初期のテスターたちは、ほとんど監視することなく、このツールに長時間のコーディングタスクを数時間にわたって実行させました。明確な完了条件が設定されていれば、ツールはいつ完了したかを自動的に判断します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どのように。</strong>例えば、Claude Code では："
+    },
+    {
+      "type": "code",
+      "code": "Migrate the payment endpoints from the old client to the new one.\nDone means: every endpoint uses the new client, the old client is deleted, and the test suite passes.\nStop and ask me only if a test fails for a reason you can't explain.",
+      "language": "Text"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/88d75704ac7ad2bde70a2a5cb1fd5c1800228810397be996b1dbfd91b61a047e.png",
+      "caption": "<b>図A</b> 1つのメッセージ：タスク全体、ゴール、そしていつ終了するか。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "「一生懸命考えなさい」なんて言うのはやめて"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>「よく考えて」「段階を踏んで考えて」といった表現を、プロンプトや保存済みの指示から削除<strong>してください</strong>。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>Opus 5.5は返信する前に常に「考える」時間を設け、その長さを自ら決定します。ユーザーは「考えて」と指示する必要はありません。あるチャット製品でのテストでは、「よく考えて」という文言を削除したところ、返信が早くなったものの、品質の明らかな低下は見られませんでした。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法。</strong>その行を削除してください。簡単な質問に手短に答えてほしい場合は、「直接答えて」と伝えてください。Claude Codeでの思考の深さを変えるには、「effort」を変更してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "実行中のタスクに追加する"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>ランニング中に何か思い出した場合は、動作している間にその続きを入力することができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>実行時間が長くなったため、再起動にかかるコストが増大した。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>手順。</strong>Claude Code でメッセージを入力し、Enter キーを押します。Claude を実行している間、たとえば「古いエンドポイント名もエイリアスとして残しておく」といった内容を入力します。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "デザイン作業では、不要なスタイルに名前を付けてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>ページ、アプリ、または成果物を依頼する際は、除外してほしいデザイン上の慣習を明記してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>デザインの方向性が定まっていないため、Opus 5.5ではいくつかのデフォルトスタイルが自動的に適用されてしまいます。「ありきたりな見た目を避ける」といった一般的な指示では、たいていあるデフォルトが別のデフォルトに置き換わるだけになってしまいます。具体的なパターンのリストを示した方が、はるかに効果的です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>では、</strong>これらのパターンの名前を挙げてください："
+    },
+    {
+      "type": "code",
+      "code": "Build a personal website with placeholder content.\nDon't use a cream or off-white background, italic accent words in headings, numbered \"01 / 02 / 03\" section labels, monospace labels, or pill-shaped buttons.",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "次に、代わりに選ばれたものを確認してください。それも気に入らない場合は、その項目をリストに追加して、もう一度尋ねてみてください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "2. 『CLAUDE CODE』でのロングランの操作"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "どの停留所で降りたいかを伝えてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればよいか。</strong>CLAUDE.mdファイルに、いつ停止して確認すべきか、いつそのまま進めるべきかについて、簡単なルールを記載しておきましょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 でこれが重要な理由。</strong>Opus 5.5 は、処理の進行状況を随時通知します。 長いタスクの途中では、処理を続行する代わりに、時折一時停止して状況を報告することがあります。例えば、次のステップを提示するものの実際には実行しない要約、処理を続行するかどうかを尋ねるメッセージ、あるいは処理を中断させない選択肢のリストなどです。このシステムは、こうした一時停止の名称を指定した指示に従います。あなたも、希望する一時停止の名称を指定してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法：</strong>これを `CLAUDE.md` に追加し、プロジェクトに合わせて編集してください："
+    },
+    {
+      "type": "code",
+      "code": "When a step doesn't need my input, keep going. Put status notes in the same message as your next action.\nStop and ask only when you can't continue without me, or before anything destructive: deleting data, force-pushing, or changing anything outside this repository.",
+      "language": "Text"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/33679878db758a7730f1bb8988328df623e2aca8acec93a4bb6ecba3bc37ee43.png",
+      "caption": "<b>図B</b> 「CLAUDE.md」のルール：いつ進み続けるべきか、いつ立ち止まって尋ねるべきか。"
+    },
+    {
+      "type": "paragraph",
+      "text": "実行が「続行しますか？」というメッセージで停止した場合は、「continue」と返信してください。そのようなことが頻繁に起こる場合は、上記のルールが役立ちます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "「継続する」というルールは、中断の回数を減らすことを意味します。そのため、リスクを伴う操作や元に戻すのが難しい操作を行う前には、必ず自分で確認を行ってください。上記のルールの最後の行は、まさにそのためのものです。破壊的なコマンドについても、確認プロンプトを有効にしておいてください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "ペアプログラミングの場合は、その逆、つまり開始前に1行の計画を立て、終了後に簡単な振り返りを行うほうがよいかもしれません。その場合は、代わりにCLAUDE.md内で記述してください。Opus 5.5では、どちらの方法でも構いません。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "大きな作業をサブエージェント間で分割するよう指示する"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>大規模なコードベースを対象とした監査、移行、またはレビュー<strong>を行う</strong>場合は、Opus 5.5 に、作業をサブエージェント間で分割させ、各結果を確認するように指示してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>初期のテスターたちは、Opus <strong>5.5において</strong>、長期間にわたる監査や移行作業において、 5.5が並列サブエージェントを調整していたが、その監視はほとんど行われていなかった。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうやって。</strong>"
+    },
+    {
+      "type": "code",
+      "code": "Audit every service in services/ for the retry bug in the linked issue.\nGive each service to its own subagent. When a subagent reports back, check its evidence before you accept it.\nFinish with one table: service, affected yes or no, and the evidence.",
+      "language": "Text"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/96f05d24a6728ed462139b2430e36c897ec36d8777109fb73ce839e6db266427.png",
+      "caption": "<b>図C：</b>サブエージェントに情報を分散させ、各エージェントの証拠を確認した後、1つの表にまとめる。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "タスクリストをファイルに保存しておく"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>実行に時間がかかる場合は、Opus5.5に対し、タスクリストをファイルに保存し、実行の進行に合わせて更新するよう指定してください。その後、スクロールバックではなくそのファイルを読み込んで、実行の進捗状況を確認してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 でこれが重要な理由。</strong>実行時間が長くなりました。実行時間が長くなるとコンテキストウィンドウが埋まってしまうため、Claude Codeは古いターンを要約して表示します。一方、ファイル内のリストはその状態でも残っており、何が完了し、何が残っているかを一目で確認できます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法。</strong>「TASKS.md にチェックリストを作成します。各項目が完了したらチェックを入れ、新たに気づいたことがあれば追加してください。」"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "3. 結果の確認"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "まず、相手に何を求めているのかをよく読んでください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>ロングランが終了したら、まずClaudeがあなたを待っている事項、たとえば未決定のままになっている事項や、承認を求めている変更などがないかを確認してください。その後、Claudeの要約の残りの部分を読んでください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 が重要な理由。</strong>Opus<strong> </strong>5.5 は<strong>、</strong>Opus 5 よりもその取り組みについてより明確に報告しています。その更新情報や最終要約では、何を行ったか、何が見つかったか、そして読者に何を求めているかを、平易な言葉で説明しています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "概要の形式を変更するには、CLAUDE.md にその旨を記載してください。例えば、「各実行の最後に、『Blocked on me』、『Changed』、『Found』の3つの見出しを付ける」<strong>といった具合です。</strong>"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "コードのレビューを依頼する"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>Opus 5.5 に、人間が確認する前に、diff やプルリクエストをレビューしてもらうように依頼する。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>初期のテスターの一人は、Opus 5.5は最小限の労力でも、Opus 5を最大限の労力をかけてテストした場合よりも多くのバグを検出でき、かつ誤検知も少なかったと述べています。また、変更点を平易な言葉で説明しているため、プルリクエストの説明文のレビューも容易になります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法。</strong>このプロンプトをClaudeに入力してください："
+    },
+    {
+      "type": "code",
+      "code": "Review the diff on this branch against main.\nList only problems you'd block the merge for. For each one, give the file and line, why it's wrong, and how to show it fails.",
+      "language": "Text"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "確認できなかった箇所に印をつけるよう指示してください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればよいか。</strong>調査や分析を行う際は、何が発見できなかったか、あるいは確認できなかったかを尋ねてみてください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5でこれが重要な理由。</strong>「これが見つからなかった」という記事は一読の価値があり、それを求めることで見つけやすくなります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法：</strong>リクエストに「確認できなかった項目には印をつけ、どこを確認したかを明記してください」という文言を追加してください。これは、ClaudeのリサーチレポートおよびClaude Codeの両方で機能します。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "4. 『CLAUDE』アプリ内"
+    },
+    {
+      "type": "paragraph",
+      "text": "まず、モデルピッカーに「Opus 5.5」と表示されていることを確認してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "グラフやスクリーンショットそのものを共有する"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処方法。</strong>グラフ、図、スクリーンショット、またはスライドを添付してください。数値を打ち直さないでください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5でこれが重要な理由。</strong>Opus 5.5<strong>は</strong>、Opus 5よりも正確にグラフ、図表、スクリーンショットを読み取ることができ、そのために追加の手順は必要ありません。 また、画像内の要素の位置関係に基づく意味の解釈にも優れています。例えば、矢印がどのボックスをつないでいるか、図の2つのバージョン間で何が変更されたか、あるいはカレンダーのスクリーンショットにおいて会議の開始・終了時刻がいつであるかといった点です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>では、</strong>画像を添付して、具体的な質問を投げかけてみましょう。「これらのサービスのうち、どれが課金APIを直接呼び出していますか？」"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "長い文書をチェックするよう依頼する"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>長い計画書や報告書、プレゼン資料などを渡して、間違いを見つけてもらうように頼む。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5でこれが重要な理由。</strong>Opus 5.5は、以前のOpusモデルよりも細部にまで注意を払っています。当社のテストでは、長い計画スレッドの中で曜日が間違っている日付や、プレゼン資料の数値と一致しないグラフを検出しました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法。</strong>「この資料の中に、数字、日付、名前など、矛盾している点がないか確認してください。問題となる箇所をそれぞれ引用し、その場所を指摘してください。」という指示を送信してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "完成したファイルをお願いしてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>スプレッドシートや文書が必要なときは、概要ではなく、そのファイルそのものを依頼してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 でこれが重要な理由。</strong>Opus 5.5 で作成されたスプレッドシートやドキュメントは、Opus 5 のものよりも、共有する前に編集する手間が少なくて済みます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "「<strong>どうすればいい？</strong>『これを共有できるスプレッドシートにしてほしい。ベンダーごとに1行ずつ、コスト、契約終了日、所有者の列を設けて』」"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "プロジェクトにおいて、例えば回答が確定したときなど"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>長いチャットでの追問のやり取りが遅く感じられる場合は、「以前の回答で決着がついている」という旨を明記しましょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5においてこれが重要な理由。</strong>長いチャットの中で、Opus 5.5は、短い返答を考えながら、時折、以前の回答を振り返ることがあります。そのため、返信が遅くなってしまいます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>では、</strong>プロジェクトの指示に以下を追加してください："
+    },
+    {
+      "type": "code",
+      "code": "Once you have answered something, treat that answer as done. Focus on what I'm asking now, and don't go back over an earlier answer unless I ask about it or point out a problem with it.",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "後のステップで前のステップの誤りが明らかになる可能性があるような、長期にわたる分析を行うプロジェクトでは、これを除外してください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "5. メッセージにフラグが付けられた場合"
+    },
+    {
+      "type": "paragraph",
+      "text": "Opus 5.5は、Fableレベルのバイオおよびサイバーセキュリティ対策を搭載してリリースされた初のOpusモデルです。ClaudeアプリおよびClaude Codeでは、フラグが立てられたメッセージのほとんどが旧モデルに移行し、そこで作業を継続することができます。 ソースコード内のセキュリティ脆弱性の発見は許可されており、日常的な健康や教育に関する質問も引き続き利用可能です。これらの安全対策により、正当な作業が誤ってフラグ付けされる場合がありますが、誤検知を減らすよう調整を進めています。対象となった場合、画面に表示される内容と対処方法は以下の通りです。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Claudeアプリにおいて"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>画面に表示されている内容です。</strong>「～に切り替えました」という文言と旧モデルの名称で始まる通知です。Claudeはそのモデルに対して応答し、チャットもそのモデルで継続されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Opus 5.5 に戻るには、モデルピッカーからそれを選択してください。チャットに以前のメッセージが残っている場合、再びフラグが立てられる可能性があります。新しいチャットを開始すれば、それを回避できます。",
+          "children": []
+        },
+        {
+          "text": "最初に確認画面を表示させるには、「設定」→「機能」の順に選択し、「メッセージにフラグが付けられたときにモデルを切り替える」をオフにしてください。すると、オプションが表示された「一時停止中」のカードが表示されます。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "このチェックでは、ファイルや検索結果を含め、会話のすべてが対象となります。そのため、フラグは直近のメッセージだけでなく、それ以前のコンテンツから発生することもあります。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Claude Code にて"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>画面に表示されている内容です。</strong>旧型モデル名が記載された通知です。セッションはそのモデルで継続されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>どうすればいいか。</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "/model を実行すると、元の状態に戻ります。",
+          "children": []
+        },
+        {
+          "text": "Escキーを2回押して、直前のメッセージを編集してから、もう一度試してみてください。",
+          "children": []
+        },
+        {
+          "text": "まず、/config を実行し、「メッセージにフラグが付けられたときにモデルを切り替える」の設定を変更してください。",
+          "children": []
+        },
+        {
+          "text": "フラグが間違っていた場合は、/feedback を実行してください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "返信でその根拠を示すよう求めないでください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>プロンプトや指示文から、返信においてその内部的な推論過程を再現するよう求める記述を削除してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5 における重要性。</strong>回答の中で内部的な推論を再現するよう求めるリクエストは、拒否することができます。これはフラグのカテゴリの一つです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>では、どうすればよいでしょうか。</strong>代わりに、Claudeに「このアプローチを選んだ理由を3文で説明してください」といったように、必要なことを尋ねてみてください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "6. スピード"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "各返信を待っている間は、高速モードをオンにしてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>対処法。</strong>『Claude Code』では、次のメッセージを送信する前に各返信を読み返すといった、やり取りを繰り返す作業には「ファストモード」を使用してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Opus 5.5における重要性。</strong>Opus<strong> </strong>5<strong>.</strong>5では、リリース当初から「高速モード」が研究用プレビューとして利用可能です。モデルは標準モードと同じですが、テキストの返却が早くなります。このモードを利用するには追加の設定が必要で、トークンあたりのコストも標準モードよりも高くなります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>方法：</strong>Claude に「/fast」と入力してください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "OPUS 5.5 チェックリスト"
+    },
+    {
+      "type": "paragraph",
+      "text": "次に長い作業に取り掛かる前に、これを一通り確認しておきましょう。"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/70157ea87e7b847039bcb94cd8d1d5c83262cae578fc24bca80b91f7f98dbf56.png",
+      "caption": "<b>図D</b> チェックリストの概要。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>質問</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "タスクには、「完了」の状態がどのようなものかが明記されています",
+          "children": []
+        },
+        {
+          "text": "プロンプトや保存された指示に「よく考えて」といった表現は含まれない",
+          "children": []
+        },
+        {
+          "text": "デザインのリクエストには、除外すべきスタイルが記載されています",
+          "children": []
+        },
+        {
+          "text": "図表やスクリーンショットは添付してあります。書き写してはいません。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Claude Codeでのロングラン</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "CLAUDE.md には、いつ止めるべきか、いつ続けるべきかが書かれており、何か破壊的なことが起こる前に止めるべきだとされています。",
+          "children": []
+        },
+        {
+          "text": "破壊的なコマンドに対しては、依然として権限確認のメッセージが表示されます",
+          "children": []
+        },
+        {
+          "text": "大規模な監査や移行作業は、サブエージェント間で分割されます",
+          "children": []
+        },
+        {
+          "text": "タスクリストはファイルに保存されています",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>確認</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "レポートの「あなたへの要望」という部分を最初に読みます",
+          "children": []
+        },
+        {
+          "text": "レビューパスは、担当者がレビューを行う前に実行されます",
+          "children": []
+        },
+        {
+          "text": "研究結果には、確認できなかった点が明記されている",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>国旗</strong>"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "元に戻す方法はご存知でしょう：モデルピッカー、または /model",
+          "children": []
+        },
+        {
+          "text": "「メッセージにフラグが立てられたときにモデルを切り替える」が希望どおりに設定されています",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "さあ、「<a href=\"https://www.anthropic.com/claude-opus-5-5\">Opus</a> <a href=\"https://www.anthropic.com/claude-opus-5-5\">5.5</a>」で開発を始めましょう！"
+    },
+    {
+      "type": "paragraph",
+      "text": "<em>校正をしてくださったモリー・ヴォルウェルクさんに感謝いたします。</em>"
+    }
+  ]
+}

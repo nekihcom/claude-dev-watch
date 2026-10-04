@@ -1,0 +1,474 @@
+{
+  "url": "https://claude.dev/blog/building-with-claude-sonnet-5-5/",
+  "title": "Building with Claude Sonnet 5.5",
+  "title_ja": "ClaudeSonnet5.5 を使用したビルド",
+  "published": "2026-09-28T12:00:00+00:00",
+  "author": "Addy Osmani",
+  "category": "Playbooks",
+  "summary": "When to choose Sonnet over Opus, what it costs, and how to tune it.",
+  "summary_ja": "「Sonnet」と「Opus」のどちらを選ぶべきか、その価格、およびチューニング方法について。",
+  "translated_at": "2026-10-04T01:18:44.149419+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Claude Sonnet 5.5は、「Opus 5.5」に続く、「Claude 5.5」ファミリーの2番目のモデルです。これは「Sonnet 5」から明らかにアップグレードされており、よりスマートで効率的、かつ処理速度が30％向上しています。 トークン単価は変更されていませんが、Sonnet 5.5では通常、同じ作業を行うために必要なトークン数が大幅に少なくて済むため、ほとんどの作業においてコストが最大30％削減されます。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/63c0bb81af17992642b05cdd8eb1d21a252a79c897ada4de85aeb93b6afc0aed.mp4",
+      "caption": "<b>図A</b> ランス・マーティンによる「コードから絵画へ」のデモ：各モデルが、同じ写真を再描画するコードを記述する。左から：写真、Claude、Sonnet 5、Claude、Sonnet 5.5、Claude、Opus 5.5。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<em>「コードから絵画へ」に関するアイデアを提供してくれた<a href=\"https://x.com/jkeatn\">@jkeatnさん</a>、および参考画像を提供してくれた<a href=\"https://x.com/IceSolst\">@IceSolst</a>さんに感謝します。</em>"
+    },
+    {
+      "type": "paragraph",
+      "text": "このガイドでは、モデルを使った構築方法について説明します。試してみるには、以下のリクエストを記載通りに実行してください："
+    },
+    {
+      "type": "code",
+      "code": "import anthropic\n\nclient = anthropic.Anthropic()\n\nresponse = client.messages.create(\n    model=\"claude-sonnet-5-5\",\n    max_tokens=4096,\n    messages=[\n        {\n            \"role\": \"user\",\n            \"content\": \"Analyze the trade-offs between microservices and monolithic architectures\",\n        }\n    ],\n    output_config={\"effort\": \"medium\"},\n)\n\nfor block in response.content:\n    if block.type == \"text\":\n        print(block.text)",
+      "language": "Python"
+    },
+    {
+      "type": "paragraph",
+      "text": "このループは、Sonnet 5.5 がデフォルトで各ブロックを型ごとに読み込むため、各ブロックを型ごとに読み込みます。そのため、レスポンスは <code>thinking</code> ブロックで始まる可能性があり、 <code>content[0].text</code> コードは動作しなくなります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "「SONNET 5.5」と「OPUS 5.5」のどちらを選ぶか"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude 5.5 ファミリーの中で、Opus 5.5 は、慎重な判断を要する複雑な作業向けに設計されています。Sonnet 5.5 は、バグの修正や機能の迅速な反復開発など、範囲が明確な日常的なタスクに適しています。また、洗練された文書、スライド、スプレッドシートを作成でき、デザイン面でも優れた機能を備えています。 その処理速度の高さから、迅速な反復開発に最適です。Claude Haiku 5.5は、大量処理かつ低遅延が求められるワークフローに対応するため、今後数週間以内にこのファミリーに加わります。"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "業務量",
+          "まずは"
+        ],
+        [
+          "範囲を適切に定めた日常的なコーディング：バグの修正、機能の迅速な反復開発、要件への適合確認",
+          "Sonnet 5.5"
+        ],
+        [
+          "大量の日々の開発",
+          "Sonnet 5.5"
+        ],
+        [
+          "デザインへの目利きが役立つ、洗練された文書、スライド、スプレッドシート（1ページ要約、図表、要約スライド、文書の編集、スプレッドシートの整理など）",
+          "Sonnet 5.5"
+        ],
+        [
+          "繰り返し行う、明確に定義された担当者の業務：調査、確認、草案作成",
+          "Sonnet 5.5"
+        ],
+        [
+          "長期的な視点に立った主体的なコーディングや知識労働など、慎重な判断を要する複雑な業務",
+          "Opus 5.5"
+        ],
+        [
+          "最も困難な問題、つまり最も高い知性が求められる問題",
+          "Opus 5.5"
+        ]
+      ]
+    },
+    {
+      "type": "quote",
+      "text": "「Epicによる初期テストにおいて、『Claude』Sonnet 5.5は、上位モデルに期待されるのと同等の品質基準を満たし、システム設計監査やデータフローのレビューにも耐え抜きました。 この新モデルは、ゲームプレイシステムアーキテクチャの数万行に及ぶコードを処理し、応答を俊敏に保ち、数時間に及ぶタスクを処理し、指示的なプロンプトを最小限に抑えて成果を出しました。」（ダニエル・フォーゲル、Epic Games COO）"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5は、タスクの仕様が明確で、結果を確認する方法がある場合に最も適しています。<a href=\"https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5\">プロンプティングガイド</a>にもあるように、「最も難易度が高く、長期的な視点が求められる作業には、Opusモデルの方が適しています。」"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "価格"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "トークン100万枚あたり",
+          "Sonnet 5.5",
+          "Opus 5.5"
+        ],
+        [
+          "入力",
+          "2ドル",
+          "4ドル"
+        ],
+        [
+          "出力",
+          "10ドル",
+          "20ドル"
+        ],
+        [
+          "キャッシュへの書き込み、5分",
+          "2.50ドル",
+          "5ドル"
+        ],
+        [
+          "キャッシュへの書き込み、1時間",
+          "4ドル",
+          "8ドル"
+        ],
+        [
+          "キャッシュからの読み取り",
+          "0.20ドル",
+          "0.20ドル"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5のすべての価格（バッチ処理およびプロンプトキャッシュを含む）は、Sonnet 5と同じであるため、モデルIDを変更してもトークンあたりの請求額は変わりません。米国限定の推論（<code>inference_geo: &quot;us&quot;</code>）の料金は、標準価格の1.1倍となります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "トークンあたりの価格は変わりませんが、前述の通り、Sonnet 5.5ではSonnet 5に比べてタスクあたりのトークン使用数が一般的に少ないため、総費用は変わります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "なお、Sonnetのデフォルトの動作レベルは、製品によって異なる場合があります。例えば、Claude Platformでは「高」、Claude Codeでは「中」に設定されているなどです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5では、長辺が最大2576ピクセルまでの高解像度画像ティアが使用されており、2000×1500の画像の場合、Sonnet 4.6、Sonnet 4.5、またはHaiku 4.5と比較して、約2.5倍のトークンが必要となります。 詳細な描写が必要ない場合は、送信前に解像度を下げてください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "モデルの詳細"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "詳細",
+          "Sonnet 5.5"
+        ],
+        [
+          "<strong>モデルID</strong>",
+          "<code>claude-sonnet-5-5</code> Claude API、AWS上のClaudeプラットフォーム、Google Cloud、およびMicrosoft Foundry上で； <code>anthropic.claude-sonnet-5-5</code> Amazon Bedrock上で；"
+        ],
+        [
+          "<strong>コンテキストウィンドウ</strong>",
+          "1Mトークン、ネイティブ、ベータヘッダーなし"
+        ],
+        [
+          "<strong>最大出力</strong>",
+          "128k トークン。Message Batches API では、 <code>output-300k-2026-03-24</code> 「beta」ヘッダーを使用すると、最大300kまで可能です"
+        ],
+        [
+          "<strong>知識の限界</strong>",
+          "2026年6月"
+        ],
+        [
+          "<strong>思考</strong>",
+          "デフォルトでオン（適応型思考）； <code>between_tools</code> 先を見越した思考を無効にする"
+        ],
+        [
+          "<strong>努力の度合い</strong>",
+          "<code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code>"
+        ],
+        [
+          "<strong>デフォルトの取り組み</strong>",
+          "<code>high</code> Claude API にて； <code>medium</code> Claude Code 内；"
+        ],
+        [
+          "<strong>トークナイザー</strong>",
+          "Sonnet5 と同様"
+        ],
+        [
+          "<strong>キャッシュ可能な最小プロンプト</strong>",
+          "512 トークン（Sonnet5 では 1,024）"
+        ],
+        [
+          "<strong>レート制限</strong>",
+          "Sonnet 5とは別物ですが、デフォルトのティア値は同じです"
+        ],
+        [
+          "<strong>優先度レベル</strong>",
+          "Claude APIで利用可能"
+        ],
+        [
+          "<strong>データの保存期間</strong>",
+          "対象のお客様には、データ保持期間ゼロのプランをご用意しています"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude APIのデフォルト設定は <code>high</code> に設定されているため、最初から確かな結果が得られます。まずはそこから始めて評価を行い、ワークロードに必要な処理レベルを選択してください。もし <code>xhigh</code> や <code>max</code> effortを使用したい場合は、Sonnet 5.5では処理時間が長くなり、コストも高くなる点に留意してください。タスクによっては、Sonnetの利点である「品質、速度、コストのバランス」が損なわれる可能性があります。その場合は、Opus 5.5の使用を検討してください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "SONNET5からの移行"
+    },
+    {
+      "type": "paragraph",
+      "text": "「思考」機能はデフォルトでオンになっています。Sonnet5を「思考」機能をオフにして実行した場合は、 <code>between_tools</code> を使用して、初期の思考機能を無効にできます。以下の手順1でその方法を説明します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "モデルIDを <code>claude-sonnet-5-5</code>に変更し、5つの互換性破りの変更と、レスポンスの形状に関する1つの変更を順に処理してください。『<a href=\"https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide\">Sonnet</a> <a href=\"https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide\">5.5 移行ガイド</a>』では、それぞれの変更について詳しく解説しています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code 弊社でも移行作業を代行いたします。 <code>/claude-api migrate this project to claude-sonnet-5-5</code> を実行して、バンドルされている<a href=\"https://platform.claude.com/docs/en/agents-and-tools/agent-skills/claude-api-skill#migrating-to-a-newer-claude-model\">Claude APIスキルを</a>呼び出してください。これにより、コードベース全体に対してモデルIDの置換と、互換性を損なうパラメータの変更が適用されます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. `between_tools` を使って、先回りした思考をオフにする"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5 では、 <code>thinking</code> フィールドを持つリクエストはアダプティブ・シンキングで処理され、 <code>thinking: {&quot;type&quot;: &quot;disabled&quot;}</code> 400エラーが返されます。代わりに新しい <code>between_tools</code> 設定を使用してください。 <code>between_tools</code>、処理はツール呼び出し間でのみ行われ、総応答時間は同等か、あるいはより速くなります。"
+    },
+    {
+      "type": "code",
+      "code": "# Before: Claude Sonnet 5\nclient.messages.create(\n    model=\"claude-sonnet-5\",\n    max_tokens=16000,\n    thinking={\"type\": \"disabled\"},\n    output_config={\"effort\": \"xhigh\"},\n    messages=[{\"role\": \"user\", \"content\": \"...\"}],\n)\n\n# After: Claude Sonnet 5.5\nclient.messages.create(\n    model=\"claude-sonnet-5-5\",\n    max_tokens=16000,\n    thinking={\"type\": \"between_tools\"},\n    output_config={\"effort\": \"high\"},\n    messages=[{\"role\": \"user\", \"content\": \"...\"}],\n)",
+      "language": "Python"
+    },
+    {
+      "type": "paragraph",
+      "text": "また、この例では、 <code>xhigh</code> から <code>high</code>に削減されます。これは、 <code>between_tools</code> には次のような制限があるためです："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>between_tools</code> 勤務先： <code>low</code>, <code>medium</code> および <code>high</code> 努力。で <code>xhigh</code> または <code>max</code> 400エラーが返されます。そこで実行するには、状況に応じた柔軟な対応が必要です。",
+          "children": []
+        },
+        {
+          "text": "他のフィールドは不要です。送信 <code>display</code>, <code>budget_tokens</code> または <code>block_binding</code> を指定して送信すると、400エラーが返されます。",
+          "children": []
+        },
+        {
+          "text": "「 <code>between_tools</code>、会話の途中で努力の度合いを変えることはできません。ターンごとに努力の度合いを変えるには、適応的思考を活用してください。",
+          "children": []
+        },
+        {
+          "text": "ツール呼び出しの合間にモデルが書き出す短い進捗報告は、依然として <code>thinking</code> ブロックとして、要約テキストと共に返されます。コンテンツブロックをタイプ別に読み取り、これらのブロックをアシスタントのターン残りの部分と共に変更せずに返してください。ツールを使用しない場合、応答にはテキストのみが含まれます。",
+          "children": []
+        },
+        {
+          "text": "Sonnet 5.5 を提供し、ベータ版ヘッダーがないすべてのプラットフォームで動作します。お使いの SDK バージョンで <code>between_tools</code>場合は、更新してください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "もし <code>between_tools</code>、ツールを使わず、数ステップの検討が必要なリクエストに対しては、代わりに適応型思考を活用してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. 強制的な「tool_choice」を、「auto」と「strict tools」に置き換える"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>tool_choice</code> タイプ <code>any</code> または <code>tool</code> 400エラーを返します。これには、トークンカウントエンドポイントも含まれます。送信 <code>auto</code>、ツールに <code>strict: true</code> して入力がスキーマに一致するようにし、プロンプト内でいつこれを使用すべきかを明記してください："
+    },
+    {
+      "type": "code",
+      "code": "weather_tool = {\n    \"name\": \"get_weather\",\n    \"description\": \"Get the current weather in a given location\",\n    \"input_schema\": {\n        \"type\": \"object\",\n        \"properties\": {\"location\": {\"type\": \"string\"}},\n        \"required\": [\"location\"],\n        \"additionalProperties\": False,\n    },\n    \"strict\": True,\n}\n\nclient.messages.create(\n    model=\"claude-sonnet-5-5\",\n    max_tokens=1024,\n    tools=[weather_tool],\n    tool_choice={\"type\": \"auto\"},  # was {\"type\": \"tool\", \"name\": \"get_weather\"}\n    messages=[\n        {\"role\": \"user\", \"content\": \"What's the weather in Paris? Use the get_weather tool.\"}\n    ],\n)",
+      "language": "Python"
+    },
+    {
+      "type": "paragraph",
+      "text": "厳密なツール使用には、 <code>additionalProperties: false</code> すべてのオブジェクトに対して。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. 会話は追記専用にする"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5の思考ブロックは、モデルと会話に紐付けられています。Sonnet 5.5はSonnet 5の思考ブロックを読み取るため、Sonnet 5からSonnet 5.5へと切り替えた場合でも、その推論は維持されます。他のモデルはSonnet 5.5のブロックを読み取ることはできません。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. コンピュータの使用をツールセットに移行する"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude APIおよびGoogle Cloud上では、Sonnet 5.5は、 <code>{&quot;type&quot;: &quot;computer_toolset_20260801&quot;}</code>のみでのコンピューター利用をサポートしています。 <code>computer_20251124</code> 400エラーが返されます。リクエストから <code>anthropic-beta: computer-use-2025-11-24</code> ヘッダーを削除し、SDK では <code>betas</code> パラメータを削除し、ベータネームスペースではなく標準クライアント経由で Messages API を呼び出してください。 <code>tools</code> エントリを置き換え、メンバー向けのエージェントループを更新してください <code>tool_use</code> ブロック、バッチアクション、および <code>toolset_name</code> on results に対応するエージェントループを更新してください。 <code>fine-grained-tool-streaming-2025-05-14</code> 「beta」ヘッダーを送信している場合は、これも削除してください。ツールセットエントリと併用すると400エラーが返されるためです。代わりに、 <code>eager_input_streaming: true</code> 各ツールで必要に応じて設定してください。Amazon Bedrockは引き続き <code>computer_20251124</code>."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. アドバイザーの組み合わせを確認してください"
+    },
+    {
+      "type": "paragraph",
+      "text": "アドバイザーツールを使用すると、Sonnet 5.5 のエグゼキュータは、Opus 4.8、Opus 4.7、および Sonnet 5 をアドバイザーとして拒否します。受け入れられるアドバイザーには、Opus 5.5、Opus 5、および Sonnet 5.5 自体が含まれます。受け入れられたすべてのアドバイザーからのアドバイスは、暗号化された <code>advisor_redacted_result</code> ブロックとして返されるため、コードからアドバイス本文を読み取ることはできません。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. シンキングブロック内のツール呼び出しの間に書かれたテキストを読む"
+    },
+    {
+      "type": "paragraph",
+      "text": "この変更によってエラーは発生しませんが、ツール呼び出しの合間に、UI上でモデルのメモが表示されなくなる場合があります。これらのメモは、1～2文を超える長さの場合、progress-update <code>thinking</code> ブロックとして表示されますが、デフォルトではその内容は空になります <code>display</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "適応的な思考をもって、 <code>thinking.display</code> を <code>&quot;updates&quot;</code> (ベータ版、 <code>thinking-display-updates-2026-08-18</code> ヘッダー付き) またはに設定し、各非空 <code>&quot;summarized&quot;</code>に設定し、空でない各 <code>thinking</code> ブロックを、 <code>tool_use</code> その後に続くブロックより前に、各空でないブロックをレンダリングする。 <code>between_tools</code>を使用すると、テキストが <code>display</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet バージョン5.5では、メッセージごとの作業量（ベータ版）、会話中のシステムメッセージ、および会話中のツール変更（ベータ版）も追加されました。Sonnet 4.6以前、またはHaiku 4.5から移行する場合は、<a href=\"https://platform.claude.com/docs/en/models/sonnet-5-5/migration-guide\">移行ガイド</a>に各開始モデルごとのチェックリストが掲載されています。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "チューニング"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "エフォートスイープを再実行してください"
+    },
+    {
+      "type": "paragraph",
+      "text": "努力レベルは再調整されているため、Sonnet5の頃とは同じレベルでも必要な思考量が異なり、以前の設定は引き継がれません。 <code>high</code> から始めてください。ただし、作業負荷が主体的なものや、遅延に敏感な場合はこの限りではありません。主体的なコーディングや多段階の道具の使用については、 <code>medium</code> から始め、 <code>high</code> より難易度が高い、あるいは時間がかかるタスクの場合は、から始めてください。チャットやその他の遅延に敏感な作業については、 <code>medium</code> または <code>low</code>から始めてください。 <code>xhigh</code> またはは、評価の結果、品質の向上が確認された場合にのみ使用してください。 <code>max</code> は、評価の結果、品質の向上が確認された場合にのみ使用してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "思考は <code>max_tokens</code>ため、余裕を持たせてください。エージェント型コーディングを行う場合は、 <code>max_tokens</code> をモデルの最大値である128,000に設定し、応答をストリーム出力してください。思考を減らすには、エフォートレベルを下げてください。システムプロンプト内でモデルに「あまり考えないで」と指示しても、確実に思考を減らせるわけではありません。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Sonnet.5 を削除する 5つの回避策"
+    },
+    {
+      "type": "paragraph",
+      "text": "既存のSonnet 5のプロンプトは、変更を加えなくても良好な性能を発揮するはずです。プロンプトに、拒否誘導、ツール呼び出しの再試行シム、あるいは「怠けないで」といった回避策が含まれている場合は、それらを削除し、他の調整を行う前に評価を再実行してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "手間をかけずに本物の小切手を請求する"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5 では、変更を「完了」として報告する前に通常は確認を行いますが、 <code>low</code> 場合によっては、その変更を検証するチェックが省略されることがあります。テストやビルドの出力がなく、変更が「完了」として報告されているのを見つけた場合、プロンプトガイドでは、以下のシステムプロンプトの段落を使用することを推奨しています："
+    },
+    {
+      "type": "code",
+      "code": "When you change code that can be run, built, or type-checked, run a real\ncheck that exercises the change before reporting it done: the project's\ntests, type-checker, or build, or the changed command itself. A syntax-only\ncheck, or a check command that failed to start, does not count; if all\nthat is missing is the project's declared dependencies, install them with\nits own package manager and lockfile (e.g. npm install, pip\ninstall -r requirements.txt), never via sudo or the system package manager,\nunless told not to. Only if no real check can run here, say which one you\ndid not run and why instead of reporting the change as done.",
+      "language": "Text"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "進行状況の表示には thinking.display を使用してください"
+    },
+    {
+      "type": "paragraph",
+      "text": "回答の中でモデルにその推論過程を記述するよう求めないでください。そうすると <code>reasoning_extraction</code> 断られる原因となります。その代わりに、考えを要約して記載するようにしてください："
+    },
+    {
+      "type": "code",
+      "code": "thinking={\"type\": \"adaptive\", \"display\": \"summarized\"}",
+      "language": "Python"
+    },
+    {
+      "type": "paragraph",
+      "text": "ユーザー向けの進捗メモのみを表示する場合は、 <code>display: &quot;updates&quot;</code> (ベータ版) をご利用ください。最初のツール呼び出しの直前の行や、終了時の簡単なまとめなど、予測可能なタイミングで更新を表示したい場合は、システムプロンプトでその旨を指定してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "プロンプトをさらにキャッシュする"
+    },
+    {
+      "type": "paragraph",
+      "text": "キャッシュ可能なプロンプトの最小長が512トークンに短縮されたため、より短いシステムプロンプトやツール定義もキャッシュの対象となりました。キャッシュの読み取りにかかるコストは、入力コストの10分の1です。リクエスト間でトップレベルの努力度を変更すると、キャッシュは無効化されます。異なるレベルで1ターン実行するには、キャッシュを維持する「メッセージごとの努力度（ベータ版）」を使用してください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "拒否とフォールバック"
+    },
+    {
+      "type": "paragraph",
+      "text": "当社の自動行動監査において、「Sonnet 5.5」は、整合性や誠実性に関するほとんどの指標において、「Sonnet 5」と同等か、それ以上の成績を示しています。また、これは当社の最高性能モデルと同様のサイバーセキュリティ対策が施された、初の「Sonnet」モデルでもあります。通常のソフトウェア開発のほとんどには影響がありません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "リクエストが拒否された場合、HTTP 200 が返され、 <code>stop_reason: &quot;refusal&quot;</code>、そして <code>stop_details</code> 5つのカテゴリのいずれかが指定されます： <code>cyber</code>, <code>bio</code>, <code>frontier_llm</code>, <code>reasoning_extraction</code> または <code>general_harms</code>。サーバーサイドのフォールバック（<code>fallbacks: &quot;default&quot;</code>、ベータ版、Claude API）は再試行を行います <code>cyber</code> し、 <code>frontier_llm</code> Sonnet 5 では拒否されます。他の3つについては再試行されません。SDKのミドルウェアや独自の再試行機能を使用することも可能です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "正当なセキュリティ業務において、「サイバー検証プログラム」はまもなく、Sonnet 5.5 にも対応するよう拡大される予定です。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "在庫状況"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Sonnet バージョン 5.5 は本日、以下のプラットフォームで利用可能になりました。開発者向けプラットフォームでは、以下のモデル ID を使用してください："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "Claude API、として <code>claude-sonnet-5-5</code>",
+          "children": []
+        },
+        {
+          "text": "Amazon Bedrockは、 <code>anthropic.claude-sonnet-5-5</code>",
+          "children": []
+        },
+        {
+          "text": "Claude AWS上のプラットフォームとして、 <code>claude-sonnet-5-5</code>",
+          "children": []
+        },
+        {
+          "text": "Google Cloudは、 <code>claude-sonnet-5-5</code>",
+          "children": []
+        },
+        {
+          "text": "Microsoft Foundryは、 <code>claude-sonnet-5-5</code>、Global Standardの展開に限定されます",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Claude Code にて"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code v2.1.284（Agent SDK for TypeScript v0.3.284 以降）以降では、 <code>sonnet</code> エイリアスは、Claude API上でSonnet 5.5に解決されます。デフォルトでは <code>medium</code> デフォルトで `effort` モードで実行され、1M コンテキストウィンドウがネイティブで利用可能です。Claude Code では `Sonnet` 5.5 の思考機能をオフにすることはできず、モデルの思考量は `effort` によって設定されます。Sonnet 5.5 には高速モードがありません。 <code>default</code> モデルはOpus 5.5のままですので、 <code>/model sonnet</code> 切り替えてください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sonnet 5.5 をぜひお試しいただき、いつもどおり、ご意見・ご感想をお寄せください。"
+    }
+  ]
+}

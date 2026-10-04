@@ -1,0 +1,637 @@
+{
+  "url": "https://claude.dev/blog/getting-started-with-claude-code-mods/",
+  "title": "Getting started with Claude Code mods",
+  "title_ja": "Claude CodeのMODの始め方",
+  "published": "2026-10-01T12:00:00+00:00",
+  "author": "Addy Osmani",
+  "category": "Tutorials",
+  "summary": "Mods are hooks that ship inside plugins and run inside your Claude Code session. Build one from an empty folder, then tour two larger mods.",
+  "summary_ja": "Modは、プラグインに同梱され、Claude Codeのセッション内で実行されるフックです。空のフォルダからModを作成し、その後、2つの大規模なModを見てみましょう。",
+  "translated_at": "2026-10-04T01:18:48.459494+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Modとは、Claude Codeのセッション内で実行される小さなJavaScriptまたはTypeScriptのファイルのことです。Modは、ターミナルやデスクトップアプリ上で、現在の状況を監視したり、Claude Codeの動作を変更したり、独自のUIを描画したりすることができます。Modを試すためにAPIを学ぶ必要はありません。 <code>claude</code>を実行し、希望するmodを記述してください。プロンプトが表示されたらホットリロードを許可すると、ターン終了時にmodが反映されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code すでに、設定、権限ルール、スラッシュコマンド、スキル、ステータス行など、動作の多くの部分を変更することができます。Modsはさらに一歩進んでおり、Claude Codeの動作を書き換えたり置き換えたりできるほか、カスタムUIを描画することも可能です。内部的には、Modsはプラグイン内に組み込まれたフックであり、各Modsはセッション内で発生するすべてのイベントをリアルタイムで検知します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "つまり、MODsを使えば、Claude Codeを自分の作業スタイルに合わせてカスタマイズできるのです。常に確認したい表示を追加したり、不安を感じるコマンドの前にガードを設けたり、変更内容を自分の好みの方法で確認できるレビュービューを作成したりすることができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "このガイドでは、空のフォルダから「<strong>Token Weather</strong>」というMODを1つ作成します。これは、プロンプトの上に表示されるコンテキストウィンドウのリアルタイム天気予報です。コードは約80行です。その後、<strong>「Blast Radius</strong>」と「<strong>Replay Theater</strong>」という2つの大規模なMODを紹介し、APIで他にどのようなことができるかを解説します。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/a4e8983c1c68c9549dbf74a7478c8e2b7932e65d881a978d51a5191e2c7ce5ac.mp4",
+      "caption": "<b>図A</b> ターミナルセッション内で、「Token Weather」、「Blast Radius」、「Replay Theater」が次々と表示される様子"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/1ee841af92c8762c69891048acf16f04442067349d5ae9715970324039765ca0.mp4",
+      "caption": "<b>図B</b> コンテキストウィンドウが埋まっていくにつれて、Token Weatherの帯が変化する様子：18%で「晴れ」、67%で「にわか雨」、81%で「嵐」"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Claude Code 2.1.287 以降。</strong>MOD はデフォルトで有効になっているため、有効にする必要はありません。API はリリースごとに変更される場合があります。Claude Code が MOD を読み込むたびに、そのビルド用の型宣言が MOD の <code>.claude-plugin/types/</code> フォルダに書き込み、それらがそのバージョンの基準となります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "MODの仕組み"
+    },
+    {
+      "type": "paragraph",
+      "text": "modとは、その動作がJavaScriptまたはTypeScriptモジュール内に実装されているClaude Codeプラグインのことです："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "このフォルダは通常のプラグインであり、 <code>.claude-plugin/plugin.json</code> マニフェストが含まれています。",
+          "children": []
+        },
+        {
+          "text": "<code>hooks/hooks.json</code> 「」の下にある1つのモジュールを指定します <code>modules</code>.",
+          "children": []
+        },
+        {
+          "text": "このモジュールは <code>register(on, options)</code>をエクスポートします。その内部では、 <code>on(event, matcher?, hook)</code> フックを追加します。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "どのフックも同じ形をしています："
+    },
+    {
+      "type": "code",
+      "code": "on(\"tool.call\", { tool: \"Bash\" }, async ($, e, next) => {\n  // $    the mods API: ui, session, state, store, fs, process, clock, http, tool, command, model, ...\n  // e    this event's input, as plain data\n  // next passes e to the other plugins and then to Claude Code's own behavior\n  return next(e);\n});",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "フックは、ミドルウェアのように連鎖を形成します。あなたのフックが実行されると、 <code>next(e)</code> イベントを次のプラグインに渡すと、最下層のClaude Codeが本来行うべき処理を実行します。フックは次の3つのうちのいずれかを実行できます："
+    },
+    {
+      "type": "note",
+      "label": "フックがつながって鎖になる",
+      "caption": null
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "移動",
+          "方法",
+          "例"
+        ],
+        [
+          "<strong>観察する</strong>",
+          "<code>const r = await next(e); /* 確認 */ return r</code>",
+          "ファイルの編集内容をすべて記録してください。各ターン終了後に測定を行ってください。"
+        ],
+        [
+          "<strong>書き換え</strong>",
+          "<code>return next({ ...e, command: safer })</code>",
+          "チェーンの残りの部分が認識する内容を変更します。"
+        ],
+        [
+          "<strong>回答</strong>",
+          "<code>return { deny: &quot;…&quot; }</code> 電話をかけずに <code>next</code>",
+          "ツール呼び出しを拒否する。コマンドまたはツールを自分で実行する。"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "これらのイベントには、ツールの呼び出し、送信されたプロンプト、ターンの開始と終了、セッションの開始と終了、スラッシュコマンド、そして <code>ui.render</code>：描画されるインターフェースのあらゆる要素を網羅しています。このモジュールは独自のサンドボックス内で動作し、DOMもNodeも存在しないため、その外部のすべての処理は <code>$</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>設定フックとの違い。</strong> 設定フックは、イベントごとにシェルコマンドを実行し、JSONデータをstdinおよびstdout経由で渡します。一方、modは一度読み込まれるとセッション中に保持されます。modは状態を保持したり、イベントの発生に合わせて更新されるUIを描画したり、Claude Codeへのコールバックを行ったりすることができます。具体的には、ペインを開いたり、プロセスを実行したり、スラッシュコマンドを登録したり、モデルが呼び出せるツールを登録したりすることが可能です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>Claude Code それ自体でそれらを使用しています。</strong>Claude Code独自の機能の一部はMODとして構築されており、AGENTS.mdのサポートや、 <code>/diff</code> 会話の横にあるペインなどが挙げられます。これらのソースコード（テストを含む）は、公開リポジトリ <a href=\"https://github.com/anthropics/claude-code\">anthropics/claude-code</a> の <code>mods/</code>に公開されているため、チームがどのようにそれらを構築しているかを確認できます。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "初めてのMODを作ろう：TOKEN WEATHER"
+    },
+    {
+      "type": "paragraph",
+      "text": "Token Weatherは、各ターン終了後にコンテキストウィンドウの残量を確認し、プロンプトの上に1行のラインを描画します。そのラインには、天気アイコン、残量（パーセンテージ）、ウィンドウから使用されたトークンの数、直近のターンの推移を示す小さなグラフ、そして前回のターンで追加された量が表示されます。"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "中古",
+          "予報"
+        ],
+        [
+          "25％未満",
+          "☀ 晴れ"
+        ],
+        [
+          "25～49％",
+          "☁ 曇り"
+        ],
+        [
+          "50～74％",
+          "☂ にわか雨"
+        ],
+        [
+          "75～89％",
+          "☇ 嵐"
+        ],
+        [
+          "90％以上",
+          "↯ まもなくコンパクト版が登場"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "実際のセッションの様子はこちらです。ターンごとにファイルが読み込まれ、帯が「☀ 晴れ」から「☂ にわか雨」、そして「☇ 嵐」へと変化していきます："
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/eccd73c962a5b22578cf5bfd4fa214f6ecd9e602a1cb8df519db737b99932f05.mp4",
+      "caption": "<b>図C</b>：3ターンにわたるフルターミナルセッションにおけるトークンウェザー：200kウィンドウの18％、次に67％、そして81％"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "手っ取り早い方法：Claudeにビルドさせる"
+    },
+    {
+      "type": "paragraph",
+      "text": "6つの手順はスキップしても構いません。Claude CodeはMODの作成方法を知っているので、希望するMODの内容を説明すれば、あとはに任せて作業を行わせることができます。以下のプロンプトを貼り付けてセッションを開始してください。 <code>claude</code> でセッションを開始し、以下のプロンプトを貼り付けてください："
+    },
+    {
+      "type": "code",
+      "code": "Make me a Claude Code mod called token-weather: a live forecast of my context window, shown in the band above the prompt.\n\nWhat it should show, on one line:\n- A weather icon and word for how full the context window is: under 25% ☀ Clear (yellow), 25–49% ☁ Cloudy (cyan), 50–74% ☂ Showers (blue), 75–89% ☇ Storm (magenta), 90% and up ↯ Compact soon (red).\n- The percentage used, then the tokens used out of the window, like \"134.4k / 200k\".\n- A small chart of the last 12 turns, drawn with ▁▂▃▄▅▆▇█.\n- How much the last turn added, like \"▲ +98.3k last turn\".\n\nIt should update after every turn.",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude そのセッションでホットリロードを有効にするかどうかを一度だけ尋ねます。許可すると、Claudeのターンが終了した際に、プロンプトの上にバンドが表示されます。 それ以降は、変更のたびにその場で再読み込みが行われるため、「Stormを70%から開始するように」「最後にドルコストを追加するように」といった微調整を繰り返し依頼し、バンドの変化を確認することができます。 このMODは当該セッションでのみ読み込まれ、終了後にフォルダは削除されます。保存したい場合は、フォルダをコピーして、通常のプラグインと同様にインストールしてください（<a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/#step-6-share-it\">手順6</a>）。"
+    },
+    {
+      "type": "paragraph",
+      "text": "このプロンプトは、単に「何を見たいか」を記述しているだけであることに注意してください。プロンプトを作成するのに、APIの知識は必要ありません。Claude Codeに組み込まれているMOD作成ガイドには、その方法（リロード後も状態が保持されるように状態をどこに保存するか、 <code>claude plugin validate</code>でプラグインを検証する方法、どのイベントにフックすべきかなどについて解説しています。「表示すべき内容」の行を変更すれば、それは私たちのモッドではなく、あなた自身のモッドになります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "まずはその構成を確認したい方や、Claudeの記事を読みたい方は、このまま読み進めてください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "手順 1：フォルダを作成する"
+    },
+    {
+      "type": "paragraph",
+      "text": "お使いのClaude Codeが十分に新しいバージョンであることを確認してください："
+    },
+    {
+      "type": "code",
+      "code": "claude --version   # 2.1.287 or later",
+      "language": "Shell"
+    },
+    {
+      "type": "paragraph",
+      "text": "次のレイアウトを作成してください："
+    },
+    {
+      "type": "code",
+      "code": "token-weather/\n├── .claude-plugin/\n│   ├── plugin.json\n│   └── types/            (written by Claude Code when it loads the mod)\n├── hooks/\n│   ├── hooks.json\n│   └── token-weather.mjs\n├── types/\n│   └── index.d.ts        (added in step 3)\n└── tests/\n    └── token-weather.test.ts   (added in step 5)",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>.claude-plugin/plugin.json</code> これは標準的なプラグインマニフェストです："
+    },
+    {
+      "type": "code",
+      "code": "{\n  \"name\": \"token-weather\",\n  \"version\": \"0.1.0\",\n  \"description\": \"A live forecast of the context window, drawn above the prompt.\",\n  \"author\": { \"name\": \"You\" }\n}",
+      "language": "JSON"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>hooks/hooks.json</code> そのモジュールを指しています。モジュールには、これがちょうど1つだけあります："
+    },
+    {
+      "type": "code",
+      "code": "{\n  \"modules\": [\"./token-weather.mjs\"]\n}",
+      "language": "JSON"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ステップ2：何かを描いてみましょう"
+    },
+    {
+      "type": "paragraph",
+      "text": "プロンプトのすぐ上にある帯は、 <code>AbovePrompt</code>です。Claude Code自体はそこに何も描画しないため、最初のターゲットとして適しています。その <code>ui.render</code> イベントをフックし、要素のツリーを返します："
+    },
+    {
+      "type": "code",
+      "code": "// hooks/token-weather.mjs\nexport function register(on) {\n  on(\"ui.render\", { component: \"AbovePrompt\" }, ($, e, next) => {\n    const { Box, Text } = $.ui.resolve(e);\n    return Box({\n      paddingX: 1,\n      children: [Text({ color: \"yellow\", bold: true, children: \"☀  Clear skies\" })],\n    });\n  });\n}",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらの要素はグローバル変数ではありません。 <code>$.ui.resolve(e)</code> 描画中のサーフェスのコンストラクタを返します。これは、Claude Codeが描画を行う各サーフェスが、それぞれわずかに異なるセットをサポートしているためです。JSXも同様に機能し、 <code>h</code> をファクトリとして使用すれば、JSXも動作します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "プラグインを読み込んだ状態でセッションを開始します："
+    },
+    {
+      "type": "code",
+      "code": "claude --plugin-dir ./token-weather",
+      "language": "Shell"
+    },
+    {
+      "type": "paragraph",
+      "text": "プロンプトの上に「☀ 晴れ」と表示されます。セッションは閉じてはいけません。フォルダは監視されているため、保存するたびにモジュールがその場で再読み込みされ、再起動は不要です。この素早いフィードバックループこそが、MOD作成の楽しさの大部分を占めています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>ヒント：</strong>形状が決まったら、<a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it\">ショートカットと同じ</a>要領で、Claude に次のモッドを記述してください。これにより、プラグインがフォルダに書き込まれ、同じセッション内でホットリロードされます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ステップ3：実数を読み取り、それを保持する <code>$.state</code>"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>$.session.usage()</code> ステータス行と同じ数値を返します。 <code>context.tokens</code> は、前回の応答が行われた入力であり、 <code>context.window</code> はモデルのウィンドウであり、 <code>context.percent</code> は前者の逆数です。この呼び出しは無料です。トークンカウントのリクエストが送信されるのは、 <code>breakdown</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "セッションの開始時と、各ターンの終了後に測定を行ってください："
+    },
+    {
+      "type": "code",
+      "code": "on(\"session.start\", async ($, e, next) => {\n  const result = await next(e);\n  await takeReading($);\n  return result;\n});\n\non(\"turn.complete\", async ($, e, next) => {\n  const result = await next(e);\n  if (!e.agentId) {\n    await takeReading($); // main-loop turns only, not subagents\n  }\n  return result;\n});",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "どちらのフックも、 <code>next(e)</code> まず実行し、その後オブザーブします。どちらの場合も、結果に変化はありません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>測定値をどこに保存するか。</strong>モジュールレベルの <code>let readings = []</code> が当然の選択肢のように思えますが、ホットリロードは新規読み込みとなるため、 <code>register</code> 再実行され、 <code>session.start</code> 再び実行され、モジュール変数はリセットされます。履歴は <code>$.state</code> に保存してください。これなら、セッション全体を通じてホストに名前付き値が保持され、リロード後も値が維持されます。"
+    },
+    {
+      "type": "code",
+      "code": "// Held by the host, so the history survives a hot reload of this file.\nconst readings = { plugin: \"token-weather\", key: \"readings\" };\n\nasync function takeReading($) {\n  const { context } = await $.session.usage();\n  if (!context?.window) return;\n  const tokens = context.tokens ?? 0;\n  const percent = context.percent ?? Math.round((tokens / context.window) * 100);\n  const { value: history = [] } = await $.state.get(readings);\n  await $.state.set(readings, [...history, { tokens, window: context.window, percent }].slice(-HISTORY));\n}",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "プラグインの<strong>型契約</strong>には状態値が宣言されています。これは、マニフェストが指す小さな <code>.d.ts</code> ファイルであり、マニフェストから参照されます。以下を追加してください。 <code>types/index.d.ts</code>:"
+    },
+    {
+      "type": "code",
+      "code": "export type TokenWeatherReading = { tokens: number; window: number; percent: number };\n\ndeclare module \"claude-code\" {\n  interface PluginState {\n    \"token-weather\": { readings: TokenWeatherReading[] };\n  }\n}",
+      "language": "TypeScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "次に、 <code>&quot;types&quot;: &quot;./types/index.d.ts&quot;</code> を <code>plugin.json</code>に追加します。この手順を省略すると、 <code>claude plugin validate</code> は、修正方法を明記したエラーメッセージを表示して処理を停止します： <code>token-weather.readings is not declared: the manifest&#x27;s types contract must name it in interface PluginState { … }</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "その見返りとして、再描画を無料で実行できます。 <code>$.state.get</code> レンダリングフックの実行中に作成されたオブジェクトは、その描画をサブスクライブするため、その後のすべての <code>$.state.set</code> そのバンドが再描画されます。 <code>$.ui.invalidate</code>."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ステップ4：予測を描く"
+    },
+    {
+      "type": "paragraph",
+      "text": "以下にモジュール全体を示します："
+    },
+    {
+      "type": "code",
+      "code": "// Token Weather: a live forecast of the context window, above the prompt.\n\nconst HISTORY = 12;\nconst BARS = \"▁▂▃▄▅▆▇█\";\nconst FORECAST = [\n  { upTo: 25, icon: \"☀\", word: \"Clear\", color: \"yellow\" },\n  { upTo: 50, icon: \"☁\", word: \"Cloudy\", color: \"cyan\" },\n  { upTo: 75, icon: \"☂\", word: \"Showers\", color: \"blue\" },\n  { upTo: 90, icon: \"☇\", word: \"Storm\", color: \"magenta\" },\n  { upTo: Infinity, icon: \"↯\", word: \"Compact soon\", color: \"red\" },\n];\n\n// Held by the host, so the history survives a hot reload of this file.\nconst readings = { plugin: \"token-weather\", key: \"readings\" };\n\nexport function register(on) {\n  on(\"session.start\", async ($, e, next) => {\n    const result = await next(e);\n    await takeReading($);\n    return result;\n  });\n\n  on(\"turn.complete\", async ($, e, next) => {\n    const result = await next(e);\n    if (!e.agentId) {\n      await takeReading($); // main-loop turns only, not subagents\n    }\n    return result;\n  });\n\n  on(\"ui.render\", { component: \"AbovePrompt\" }, async ($, e, next) => {\n    const { value: history = [] } = await $.state.get(readings);\n    if (e.props.hasSurvey || history.length === 0) {\n      return next(e);\n    }\n    const { Box, Text } = $.ui.resolve(e);\n    return band(Box, Text, history, e.props.bodyColumns);\n  });\n}\n\nasync function takeReading($) {\n  const { context } = await $.session.usage();\n  if (!context?.window) return;\n  const tokens = context.tokens ?? 0;\n  const percent = context.percent ?? Math.round((tokens / context.window) * 100);\n  const { value: history = [] } = await $.state.get(readings);\n  await $.state.set(readings, [...history, { tokens, window: context.window, percent }].slice(-HISTORY));\n}\n\nfunction band(Box, Text, history, columns) {\n  const now = history[history.length - 1];\n  const f = FORECAST.find((b) => now.percent < b.upTo);\n  const parts = [\n    Text({ color: f.color, bold: true, children: `${f.icon}  ${f.word}` }),\n    Text({ children: `  ${now.percent}% of context` }),\n    Text({ dimColor: true, children: `  ${short(now.tokens)} / ${short(now.window)}` }),\n  ];\n  if (columns >= 60) {\n    parts.push(Text({ dimColor: true, children: \"   last turns \" }));\n    parts.push(Text({ color: f.color, children: sparkline(history) }));\n    if (history.length > 1) {\n      parts.push(Text({ dimColor: true, children: trend(history) }));\n    }\n  }\n  return Box({ flexDirection: \"row\", paddingX: 1, children: parts });\n}\n\nfunction sparkline(history) {\n  const top = Math.max(...history.map((r) => r.tokens), 1);\n  return history.map((r) => BARS[Math.floor((r.tokens / top) * (BARS.length - 1))]).join(\"\");\n}\n\nfunction trend(history) {\n  const delta = history[history.length - 1].tokens - history[history.length - 2].tokens;\n  if (delta === 0) return \"  steady\";\n  return delta > 0 ? `  ▲ +${short(delta)} last turn` : `  ▼ ${short(-delta)} last turn`;\n}\n\nfunction short(n) {\n  if (n >= 1_000_000) return `${+(n / 1_000_000).toFixed(1)}M`;\n  if (n >= 1_000) return `${+(n / 1_000).toFixed(1)}k`;\n  return String(n);\n}",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "以下の3つのポイントは、自分のMODに取り入れる価値があります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>コンポーネントのプロップは `<code>e.props</code>` にあります。</strong> <code>hasSurvey</code> これは、surveyがbandを要求していることを示しているため、hookは <code>next(e)</code>. <code>bodyColumns</code> はバンドの実際の幅であり、トランスクリプトの横にペインがドッキングされている間は、ターミナルよりも狭くなります。ツリーのサイズをこれに合わせてください。ただし <code>e.component</code>, <code>e.surface</code>, <code>e.requestId</code> および <code>e.viewport</code> のみが <code>e</code>.",
+          "children": []
+        },
+        {
+          "text": "<strong>描くものが何もないときはパス</strong>してください<strong>。 </strong><code>next(e)</code> を選択すると、バンドがClaude Codeや他のMODに戻ります。",
+          "children": []
+        },
+        {
+          "text": "<strong>絵文字ではなく、シングル幅の記号を使用してください。</strong>☀ ☁ ☂ ☇ ↯ は、どのターミナルフォントでも揃って表示されます。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "ファイルを保存すると、実行中のセッションがそれを反映します。大容量のファイルを読み込むターンを数回繰り返すと、このセクションの冒頭の録音にあるように、バンドの状態が「Clear」から「Showers」、そして「Storm」へと変化します。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ステップ 5：検証とテスト"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>claude plugin validate</code> Claude Code と同様にマニフェストとモジュールのソースを読み込み、そのモジュールがどのようなフックや呼び出しを行っているかを報告します："
+    },
+    {
+      "type": "code",
+      "code": "$ claude plugin validate ./token-weather\n  > types ./types/index.d.ts declares state: token-weather.readings\n  > ./token-weather.mjs hooks: session.start, turn.complete, ui.render{component=AbovePrompt}\n  > ./token-weather.mjs calls: $.session.usage (via takeReading), $.state.get, $.state.set (via takeReading), $.ui.resolve\n  > ./token-weather.mjs state writes: token-weather.readings\n  > ./token-weather.mjs state reads: token-weather.readings\n√ Validation passed",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "<code>claude plugin test</code> プラグインの <code>*.test.ts</code> ファイルを実際のClaude Codeランタイムに対して実行します。テストが登録するフックは <code>on</code> は、チェーン内のモジュール処理の<em>後に</em>実行され、Claude Codeが返すはずの値をスタブ化するため、 <code>$.session.usage()</code> を正確に制御できます："
+    },
+    {
+      "type": "code",
+      "code": "// tests/token-weather.test.ts\nimport { describe, expect, test } from \"claude-code/testing\";\n\ndescribe(\"token-weather\", () => {\n  test(\"the band follows the context window\", async ($, on) => {\n    // Hooks registered here run after the mod and stub what Claude Code would answer.\n    let tokens = 36_100;\n    on(\"session.start\", ($, e) => ({ cwd: e.cwd }));\n    on(\"session.usage\", () => ({\n      value: { startedAt: 0, rateLimits: [], context: { tokens, window: 200_000, percent: Math.round(tokens / 2_000) } },\n    }));\n    on(\"turn.complete\", () => ({ text: \"\" }));\n\n    await $.session.start({ surface: \"terminal\", isInteractive: true, cwd: \"/work\" } as any);\n    const ui = await $.ui.mount({\n      plugin: \"token-weather\",\n      surface: \"terminal\",\n      component: \"AbovePrompt\",\n      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 120 },\n    } as any);\n    expect(await ui.find({ type: \"Text\", text: /Clear/ })).toBeDefined();\n\n    tokens = 134_400;\n    await $.turn.complete({ reason: \"answer\", answer: \"ok\", durationMs: 1 } as any);\n    expect(await ui.find({ type: \"Text\", text: /Showers/ })).toBeDefined();\n    expect(await ui.find({ type: \"Text\", text: /67% of context/ })).toBeDefined();\n    expect(await ui.find({ type: \"Text\", text: /▲ \\+98\\.3k last turn/ })).toBeDefined();\n    await ui.unmount();\n  });\n});",
+      "language": "TypeScript"
+    },
+    {
+      "type": "code",
+      "code": "$ claude plugin test ./token-weather\n(pass) token-weather > the band follows the context window\n 1 pass\n 0 fail",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "このテストでは、ステップ3での再描画の挙動も確認します。バンドは、 <code>turn.complete</code> 、モジュールが再描画を要求することなく更新されます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ステップ6：共有する"
+    },
+    {
+      "type": "paragraph",
+      "text": "MODはプラグインの一種なので、配布方法も同様です。マーケットプレイスに掲載しますが、その方法は、単にフォルダに <code>.claude-plugin/marketplace.json</code>:"
+    },
+    {
+      "type": "code",
+      "code": "{\n  \"name\": \"my-mods\",\n  \"owner\": { \"name\": \"You\" },\n  \"plugins\": [{ \"name\": \"token-weather\", \"source\": \"./token-weather\" }]\n}",
+      "language": "JSON"
+    },
+    {
+      "type": "code",
+      "code": "claude plugin marketplace add ./my-mods\nclaude plugin install token-weather@my-mods --scope user",
+      "language": "Shell"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "MODの共有"
+    },
+    {
+      "type": "paragraph",
+      "text": "ModはClaude Codeのプラグインであるため、他のプラグインと同じ方法で共有でき、新たに学ぶべきことは何もありません。ModをGitHubのリポジトリにマーケットプレイスファイルとともに配置すれば、そのリポジトリがあなたのマーケットプレイスになります。誰でもそこからインストールでき、通常のプッシュ操作で更新を行うことができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code でのインストールには、3つのコマンドを実行します："
+    },
+    {
+      "type": "code",
+      "code": "/plugin marketplace add your-org/my-mods\n/plugin install token-weather@my-mods\n/reload-plugins",
+      "language": "Text"
+    },
+    {
+      "type": "paragraph",
+      "text": "このMODはリロードすると起動します。表示されない場合は、Claude Codeを再起動してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "MODとは、お使いのマシン上のClaude Code内で実行されるコードのことで、Claude Codeと同じアクセス権限を持ち、Anthropicではなくその発行元によって作成されています。したがって、MODのインストールはパッケージをインストールするのと同じ要領で行ってください。まずリポジトリの内容を確認し、信頼できる提供元からのもののみをインストールしてください。コマンドを実行するまでは、何もインストールされません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeディレクトリでは、MODを含むプラグインを受け付けています。<a href=\"https://claude.ai/directory/manage\">claude.ai/directory/manage</a> からご自身のプラグインを投稿すれば、あなたがリンクを貼らなくても、他のユーザーがそれを見つけられるようになります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "さらに2つのMOD"
+    },
+    {
+      "type": "paragraph",
+      "text": "「Token Weather」は、単に監視して描画するだけです。次の2つのMODでは、イベントの処理やペインの表示、入力の受け付けも行います。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "爆発範囲：危険なコマンドを実行する前に、それがどのような変化をもたらすかを確認する"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeが <code>rm -rf</code>, <code>git reset --hard</code>, <code>git clean</code>、フォースプッシュ、またはデータベースのマイグレーションが行われると、Blast Radiusはその呼び出しを一時停止します。Blast Radiusは、そのコマンドがどのリソースに影響を与えるかを解析し、「<strong>続行」</strong>と<strong>「キャンセル」</strong>の選択肢が表示されたパネルを開きます。 <code>2</code> を選択すると、Claudeには理由付きの拒否通知が表示されます。 <code>1</code> を押すと、コマンドは記述どおりに実行されます。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/75748f2aa5232025acdbe254ddea99a0b573152035fd289437d2953b8f6061e7.mp4",
+      "caption": "<b>図D</b>「Blast Radius<b>」</b>は「rm -rf build」を実行し、削除される9つのファイル（1.1 MB）を一覧表示します。「Cancel」を選択すると実行は中止されますが、2回目の試行で「Proceed」を選択すると実行されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "このスクリプトでは、3つのフックを使用しています： <code>tool.call</code> Bash用、および <code>ui.render</code> および <code>Pane</code> および <code>AbovePrompt</code>。その中核となるのは、上の表にある「answer」という動きです："
+    },
+    {
+      "type": "code",
+      "code": "on(\"tool.call\", { tool: \"Bash\" }, async ($, e, next) => {\n  const risk = classify(String(e.command ?? \"\"));\n  if (risk === null) return next(e);                 // everything else runs as normal\n\n  const report = await measure($, risk, await $.session.cwd());  // git status, git clean -n, du, ...\n  held = { command: e.command, risk, report, decision: null };\n  const opened = await $.ui.open({ id: \"blast-radius\", title: \"Blast Radius\", focus: true });\n  if (!opened.isPlaced) held.where = \"band\";         // too narrow for a pane: draw above the prompt\n\n  while (held.decision === null && !next.signal.aborted) {\n    await $.process.run([\"sleep\", \"0.25\"]);          // time inside $ calls doesn't count against the hook's time limit\n  }\n  if (held.decision === \"proceed\") return next(e);   // let it run\n  return { deny: `Blast Radius held this command: the user pressed Cancel. It would have: ${report.summary}.` };\n});",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "そこから学べることは："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong><code>$.process.run</code> ドライラン用です。</strong>このレポートは、ツール自体のコマンドから得られたものです： <code>git status --porcelain</code>, <code>git clean -n</code>, <code>git log HEAD..origin/main</code>, <code>showmigrations</code>。引数はargv配列として渡されるため、パス内のどのファイルもシェルコードとして実行されることはありません。",
+          "children": []
+        },
+        {
+          "text": "<strong>通話を保留中。</strong>フックはディスパッチごとに10秒間の処理時間を割り当てられますが、 <code>$</code> 通話内での待機時間はカウントされません。ループは、ボタンが押されるまで短い <code>sleep</code> 処理を待機し、ボタンが <code>onPress</code> 決定が行われるまで待機し、 <code>next.signal</code> （Escキーが押された場合）処理が中断されると、ループは終了します。",
+          "children": []
+        },
+        {
+          "text": "<strong>ホットキー付きのボタン。</strong> <code>Button({ label: &quot;Proceed&quot;, hotkey: &quot;1&quot;, onPress })</code> クリック、TabキーとEnterキーの組み合わせ、または数字を入力することで動作します。",
+          "children": []
+        },
+        {
+          "text": "<strong>バンドに縮小表示されます。</strong>画面の幅が十分にある場合、ターミナルはトランスクリプトの横にペインを表示します。 <code>$.ui.open</code> 回答 <code>isPlaced: false</code>すると、プロンプトの上に同じレポートが表示されます：",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/ac53d89fc2dbe36603c30639b12fdc7edcfba5072b9b417e656a65a2d196cc37.png",
+      "caption": "<b>図 E</b> 120 列の位置で、Blast Radius はプロンプトの上の帯に「git reset --hard」に関するレポートを表示します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "これは安全策であり、権限管理システムではありません。コマンドのテキストを読み取るため、 <code>$(…)</code>、これを <code>rm</code> は通過できます。完全にブロックしたい場合は、権限ルールを使用してください。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "リプレイシアター：前回のターンでの編集内容を順を追って確認する"
+    },
+    {
+      "type": "paragraph",
+      "text": "ターンが進行している間、「リプレイシアター」はすべての「Edit」および「Write」の呼び出しを記録します。具体的には、ファイル名に加え、その前後のテキストも記録されます。ターンが終了すると、プロンプトの上にヒントが表示されます。 <code>r</code> キーを押すか（または <code>/replay</code>）を押すと、編集内容を1つの差分ずつ順に確認できるペインが表示され、番号付きのステップ一覧と「<strong>前へ</strong>」「<strong>次へ</strong>」「<strong>閉じる</strong>」ボタンが表示されます。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/e616623b87187bf2439108f0f566448fa74f8cfee6fd5b4c5d8703da2ce4e331.mp4",
+      "caption": "<b>図 F</b> リプレイシアター：3つのファイルにわたる5回の編集と名前変更を行った後のヒント、続いてペイン内の手順1から5"
+    },
+    {
+      "type": "paragraph",
+      "text": "編集をブロックしたり変更したりすることは決してありません。ただ、次のように観察するだけです："
+    },
+    {
+      "type": "code",
+      "code": "on(\"tool.call\", async ($, e, next) => {\n  if (EDIT_TOOLS.has(e.tool)) state.pending.push(...(await stepsFor($, e)));  // old/new text → diff\n  return next(e);                                                              // the edit runs untouched\n});\n\non(\"turn.start\", ($, e, next) => { if (!e.agentId) state.pending = []; return next(e); });\n\non(\"turn.complete\", async ($, e, next) => {\n  const r = await next(e);\n  if (!e.agentId && state.pending.length) state.replay = state.pending;       // one replay per turn\n  return r;\n});\n\non(\"session.start\", async ($, e, next) => {\n  const r = await next(e);\n  await $.command.register({ name: \"replay\", description: \"Step through the last turn's file edits\" });\n  return r;\n});\non(\"command.run\", { command: \"replay\" }, async ($, e) => ({ text: (await openReplay($)) ? \"Replaying\" : \"No edits\" }));",
+      "language": "JavaScript"
+    },
+    {
+      "type": "paragraph",
+      "text": "そこから学べることは："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>ペアリングイベント。</strong> <code>turn.start</code> そして <code>turn.complete</code> 編集内容を1ターンにつき1つのリプレイにまとめ、 <code>e.agentId</code> サブエージェントのターンはグループ化の対象外とする。",
+          "children": []
+        },
+        {
+          "text": "<strong>スラッシュコマンドの登録。</strong> <code>$.command.register</code> in <code>session.start</code>で、その後、そこで回答してください。 <code>command.run</code>.",
+          "children": []
+        },
+        {
+          "text": "<strong>ファイルの読み込み。</strong>書き込みの場合、 <code>$.fs.read</code> 書き込みが反映される直前の古い内容を取得するため、差分は実際のものです。",
+          "children": []
+        },
+        {
+          "text": "<strong>配置はワークスペースの役割です。</strong>フルスクリーン表示では、ペインは右側にドッキングされます。80列の場合、プロンプトの上部にインラインで表示されます。どちらの場合でも、モジュールは同じツリーを描画します。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/bb2b908077c752f4e43672b5d5e7b0d262756bf27303d0884634cd142487f996.png",
+      "caption": "80列分の<b>FIG G</b> リプレイシアターを、プロンプトの上部にインラインで描画"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "身につけておく価値のある4つの習慣"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>Claude Codeが自動生成してくれる型情報を活用しましょう。</strong>MODが読み込まれるたびに、Claude Codeがビルド用の宣言をMODの <code>.claude-plugin/types/</code> フォルダにビルド用の宣言を書き出します。これにより、エディタや <code>tsc -p</code> 追加の手順なしに動作します。これらは、すべてのイベント、各メソッド <code>$</code> 各要素のプロパティに関するリファレンスとなります。",
+          "children": []
+        },
+        {
+          "text": "<strong><code>e.props</code> からプロパティを読み込みます。</strong> <code>hasSurvey</code>, <code>bodyColumns</code> そして、残りのものはそこにあり、 <code>e</code> そのサイト自体にはありません。",
+          "children": []
+        },
+        {
+          "text": "<strong>ホットリロードを想定してください。</strong>セーブが行われるたびに <code>register</code> 実行され <code>session.start</code> 実行されるため、データは <code>$.state</code>に保存し、モジュール変数には保存しないでください。",
+          "children": []
+        },
+        {
+          "text": "<strong>図面が表示されない場合は、ログを確認</strong>してください<strong>。 </strong><code>claude --debug</code> を実行し、フックが検証に失敗したツリーを返したという記述がないか確認してください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "何を改造しますか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "ここで紹介する3つのMODは、それぞれ「<em>コンテキストはどの程度埋まっているか？</em>」「<em>このコマンドは何を削除しようとしているのか？</em>」「<em>Claudeは何を変更したのか？</em>」という1つの疑問から生まれました。皆さんの疑問はそれぞれ異なるでしょうが、それこそが重要な点です。まずは以下のアイデアを参考にしてみてください："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "以下のコストまたはレート制限メーター <code>$.session.usage()</code>のコストまたはレート制限メーターを、ステータス行として <code>$.ui.status</code>",
+          "children": []
+        },
+        {
+          "text": "A <code>prompt.submit</code> すべてのプロンプトにチームの規約を追加するフック",
+          "children": []
+        },
+        {
+          "text": "このセッションでClaudeが読み込んだファイルを一覧表示するペイン。これは、がこれまでに読み込んだファイルのリアルタイムなマップとして機能します。",
+          "children": []
+        },
+        {
+          "text": "長いターンが終了した際に、 <code>$.ui.toast</code> 長いターンが終了した際にトーストを表示する",
+          "children": []
+        },
+        {
+          "text": "A <code>tool.call</code> スタックに合わせて設定されたガード（本番環境の kubectl コンテキストなど）や <code>terraform apply</code>",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "作ったものをシェアしよう"
+    },
+    {
+      "type": "paragraph",
+      "text": "毎日使っているMODを作りましたか？その動作中のGIFやスクリーンショットを添えて、XやLinkedInに投稿しましょう。そうすれば、他の開発者もその可能性を実感できます。また、そのプラグインをマーケットプレイスに掲載し（<a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/#sharing-your-mod\">MODの共有</a>）、リンクを貼っておけば、気に入った人は3つのコマンドでインストールできるようになります。"
+    }
+  ]
+}

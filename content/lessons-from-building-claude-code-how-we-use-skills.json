@@ -1,0 +1,658 @@
+{
+  "url": "https://claude.dev/blog/lessons-from-building-claude-code-how-we-use-skills/",
+  "title": "Lessons from building Claude Code: How we use skills",
+  "title_ja": "Claude Codeの構築から得た教訓：スキルの活用方法",
+  "published": "2026-06-03T12:00:00+00:00",
+  "author": "Thariq Shihipar",
+  "category": "Skills",
+  "summary": "What we learned building and scaling hundreds of skills internally at Anthropic.",
+  "summary_ja": "Anthropic社内で数百ものスキルを構築・拡大する過程で得た知見。",
+  "translated_at": "2026-10-04T01:18:30.682339+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "スキルは、Claude Codeにおいて最も頻繁に利用される拡張ポイントの一つとなっています。スキルは柔軟性が高く、作成も配布も簡単です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "しかし、この柔軟性ゆえに、何が最も効果的かを見極めるのが難しくなります。どのようなスキルを作る価値があるのでしょうか？スキルはどのように構成すべきでしょうか？いつ他の人と共有すべきでしょうか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "Anthropic では、Claude Codeのスキルを幅広く活用しており、現在も数百のスキルが実際に稼働しています。ここでは、スキルを活用して開発を加速させる上で私たちが得た知見をご紹介します。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "「スキル」とは何でしょうか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルとは、エージェントが参照して利用することで、より正確かつ効率的にタスクを実行できるようになる、指示、スクリプト、リソースをまとめたフォルダのことです。このブログ記事では、スキルの基礎知識をお持ちであることを前提としています。初めての方は、<a href=\"https://anthropic.skilljar.com/introduction-to-agent-skills\">Skilljarの</a>「<a href=\"https://anthropic.skilljar.com/introduction-to-agent-skills\">エージェントスキル入門」</a>コースから始めてください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルに関してよく耳にする誤解の一つに、「スキルは単なるマークダウンファイルに過ぎない」というものがあります。実際には、スキルはフォルダであり、エージェントが検出して探索し、操作できるスクリプト、アセット、データなどを含めることができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code では、スキルには動的フックの登録など、<a href=\"https://code.claude.com/docs/en/skills#frontmatter-reference\">さまざまな設定オプション</a>が用意されています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Codeにおいて、最も効果的なスキルのいくつかは、これらの設定オプションやフォルダ構造を効果的に活用していることがわかりました。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "スキルの種類"
+    },
+    {
+      "type": "paragraph",
+      "text": "Anthropicで社内のスキルをすべて整理したところ、それらが9つのカテゴリーに分類されることがわかりました。最適なスキルは1つのカテゴリーにすっきりと収まりますが、やりすぎようとするスキルは複数のカテゴリーにまたがり、エージェントを混乱させてしまいます。これは決定的なリストではありませんが、自社のスキルライブラリにおける不足部分を特定するための有用な枠組みとなります。"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/8c0b43b7a1f0aefab9af8990f3d69eb961d4c5eef12c1e72584828787e57cb5f.png",
+      "caption": "<b>図A　</b>Claude Codeチームは、社内のスキルを分類した結果、それらを9つの明確なカテゴリーに分類できることがわかりました。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. ライブラリおよびAPIリファレンス"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、ライブラリ、CLI、またはSDKを正しく使用する方法について解説したスキルです。これらは、内部ライブラリだけでなく、Claude Codeが扱いにくさを感じることがある一般的なライブラリに関するものも含まれます。こうしたスキルには、多くの場合、参照用のコードスニペットが収められたフォルダや、Claudeがスクリプトを作成する際に避けるべき注意点の一覧が含まれていました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>billing-lib</code> — 社内の請求処理ライブラリ：エッジケースやフットガンなど。",
+          "children": []
+        },
+        {
+          "text": "<code>internal-platform-cli</code> — 内部CLIラッパーのすべてのサブコマンドと、それぞれの使用例。",
+          "children": []
+        },
+        {
+          "text": "<code>sandbox-proxy</code> — 開発作業に向けた組織のアウトバウンドゲートウェイの設定：アクセス可能なホスト、 「接続拒否」エラーのデバッグ方法、許可リストへのエントリの追加方法。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. 製品の検証"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、コードが正常に動作しているかどうかをテストまたは検証する方法を示すスキルです。多くの場合、Playwrightやtmux、その他の外部検証ツールと組み合わせて使用されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "検証スキルは、Claudeの社内における成果物の品質に、最も顕著な影響を与えてきました。エンジニアに1週間を費やしてもらい、検証スキルを卓越したレベルに引き上げることは、十分に価値のあることと言えます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeの出力を動画として記録し、具体的にどのようなテストが行われたかを確認できるようにしたり、各ステップで状態に対するプログラムによるアサーションを適用したりといった手法を検討してください。これらは、多くの場合、スキルにさまざまなスクリプトを組み込むことで実現されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>signup-flow-driver</code> — ヘッドレスブラウザ上で、登録 → メール認証 → オンボーディングの各ステップを実行し、各ステップで状態を確認するためのフックが用意されている",
+          "children": []
+        },
+        {
+          "text": "<code>checkout-verifier</code> — Stripeのテストカードを使用してチェックアウトUIを操作し、請求書が実際に正しい状態で生成されることを確認する",
+          "children": []
+        },
+        {
+          "text": "<code>tmux-cli-driver</code> — 検証対象が TTY を必要とする、対話型の CLI テストの場合",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. データの取得と分析"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、データやモニタリング・スタックと連携するためのスキルです。これらのスキルには、認証情報や特定のダッシュボードIDなどを用いてデータを取得するためのライブラリのほか、一般的なワークフローやデータ取得方法に関する手順などが含まれる場合があります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>funnel-query</code> — 「登録→アクティベーション→有料化」のプロセスを確認するにはどのイベントをトラッキングすればよいか、および正規の user_id が記載されたテーブル",
+          "children": []
+        },
+        {
+          "text": "<code>cohort-compare</code> — 2つのコホートの継続率またはコンバージョン率を比較し、統計的に有意な差を特定し、セグメントの定義へのリンクを掲載する",
+          "children": []
+        },
+        {
+          "text": "<code>grafana</code> — データソースのUID、クラスタ名、問題 → ダッシュボードの参照テーブル",
+          "children": []
+        },
+        {
+          "text": "<code>datadog</code> — フィールド参照（@request_id 対 trace_id）、サービス一覧、メトリックプレフィックスの規則",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. ビジネスプロセスとチームの自動化"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、反復的なワークフローを1つのコマンドに自動化するスキルです。これらのスキルは通常、比較的単純な指示ですが、他のスキルやMCPとの間でより複雑な依存関係を持つ場合があります。こうしたスキルでは、以前の結果をログファイルに保存しておくことで、モデルの一貫性を保ち、ワークフローの過去の実行状況を反映させることができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>standup-post</code> — チケットトラッカー、GitHubのアクティビティ、および以前のSlackのデータを統合し、→ フォーマット済みのスタンドアップ形式で、差分のみを表示します",
+          "children": []
+        },
+        {
+          "text": "<code>create-&lt;ticket-system&gt;-ticket</code> — スキーマ（有効な列挙型値、必須フィールド）の遵守に加え、作成後のワークフロー（レビュー担当者に通知、Slackへのリンク）を適用します",
+          "children": []
+        },
+        {
+          "text": "<code>weekly-recap</code> — マージされたプルリクエスト + クローズされたチケット + デプロイ → 整理されたまとめ記事",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. コードのスケルトンとテンプレート"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、コードベース内の特定の関数に対してフレームワークのボイラープレートを生成するスキルです。これらのスキルを、組み合わせ可能なスクリプトと併用することもできます。特に、スキャフォールディングに、コードだけでは完全にカバーできない自然言語による要件がある場合に役立ちます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>new-&lt;framework&gt;-workflow</code> — 指定したアノテーションを用いて、新しいサービス／ワークフロー／ハンドラーを構築します",
+          "children": []
+        },
+        {
+          "text": "<code>new-migration</code> — 移行ファイルのテンプレートと、よくある落とし穴",
+          "children": []
+        },
+        {
+          "text": "<code>create-app</code> — 認証、ロギング、デプロイの設定が事前に組み込まれた新しい社内向けアプリ",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. コードの品質とレビュー"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、組織内でコードの品質を確保し、コードのレビューを支援するスキルです。これには、堅牢性を最大限に高めるための決定論的なスクリプトやツールなどが含まれます。これらのスキルは、フックの一部として、あるいはGitHubアクション内で自動的に実行することをお勧めします。"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>adversarial-review</code> — 新たな視点を持つサブエージェントを生成して批評を行わせ、修正を加え、指摘内容が些細な点に過ぎなくなるまでこのプロセスを繰り返す",
+          "children": []
+        },
+        {
+          "text": "<code>code-style</code> — コードスタイルを徹底させます。特に、Claudeがデフォルトではうまく処理できないスタイルについてです。",
+          "children": []
+        },
+        {
+          "text": "<code>testing-practices</code> — テストの書き方や、何をテストすべきかについての説明。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. CI/CD とデプロイ"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、コードベース内でコードを取得、プッシュ、デプロイするのに役立つスキルです。これらのスキルは、データを収集するために他のスキルを参照する場合があります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>babysit-pr</code> — PRを監視 → 不安定なCIを再実行 → マージの競合を解決 → 自動マージを有効化",
+          "children": []
+        },
+        {
+          "text": "<code>deploy-&lt;service&gt;</code> — ビルド → スモークテスト → エラー率の比較を伴う段階的なトラフィック展開 → 回帰が発生した際の自動ロールバック",
+          "children": []
+        },
+        {
+          "text": "<code>cherry-pick-prod</code> — 独立したワークツリー → チェリーピック → 競合の解決 → テンプレートを使用したプルリクエスト",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. ランブック"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、症状（Slackのスレッド、アラート、エラーシグネチャなど）を基に、複数のツールを用いた調査手順を順を追って実行し、体系的なレポートを作成するスキルです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>&lt;service&gt;-debugging</code> — 症状 → ツール → トラフィックが最も多いサービスにおけるクエリパターンを照合する",
+          "children": []
+        },
+        {
+          "text": "<code>oncall-runner</code> — アラートを取得する → よくある原因を確認する → 調査結果をまとめる",
+          "children": []
+        },
+        {
+          "text": "<code>log-correlator</code> — リクエストIDが指定されると、そのリクエストに関与した可能性のあるすべてのシステムから、一致するログを取得します",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. インフラの運用"
+    },
+    {
+      "type": "paragraph",
+      "text": "これらは、日常的な保守や運用手順を実行するためのスキルであり、その中にはガードレールの導入が有効となる破壊的な作業も含まれます。これにより、エンジニアは重要な作業においてベストプラクティスをより容易に遵守できるようになります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例としては、次のようなものがあります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>&lt;resource&gt;-orphans</code> — 孤立したポッド／ボリュームを検出 → Slack に投稿 → 待機期間 → ユーザーによる確認 → 連鎖的なクリーンアップ",
+          "children": []
+        },
+        {
+          "text": "<code>dependency-management</code> — 組織の依存関係承認ワークフロー",
+          "children": []
+        },
+        {
+          "text": "<code>cost-investigation</code> — 「ストレージ／データ転送料金が急増した理由は？」（具体的なバケットとクエリパターンを明記）",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "スキル作成のコツ"
+    },
+    {
+      "type": "paragraph",
+      "text": "作成するスキルが決まったら、どのように記述すればよいのでしょうか？ここでは、Claude Codeチームが提案する、スキル作成に関するベストプラクティスやヒント、コツをいくつかご紹介します。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "当たり前のことは言わないでください"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude すでにプログラミングの知識があり、コードベースを読み解くことができる。Claudeがデフォルトで行う処理を単に再記述するだけのスキルは、文脈を追加するだけで付加価値を生み出さない。主に知識を提供することを目的としたスキルを公開する場合は、Claudeの通常の思考の枠組みを超えた情報に焦点を当てるべきだ。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<a href=\"https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md\">フロントエンドのデザインスキル</a>はその好例です。これは、Anthropicのエンジニアが、Claudeのデザインセンスを向上させるべく顧客と繰り返し協議を重ね、Interフォントや紫色のグラデーションといった定番のパターンを避けることで実現したものです。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "「注意すべき点」のセクションを作成する"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/16acf64a5f80810ad01275e7a7de64b689ff947b145ee1b188f328e614cdfe98.png",
+      "caption": null
+    },
+    {
+      "type": "paragraph",
+      "text": "どのスキルにおいても、最も有益な情報は「注意点」セクションに含まれています。これらのセクションは、Claudeがスキルを操作する際に遭遇する一般的な失敗事例に基づいて作成されるべきです。理想的には、こうした注意点を反映させるために、時間をかけてスキルを更新していくことが望ましいでしょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例えば："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "「この <code>subscriptions</code> このテーブルは追記専用です。目的の行は、最新のものではなく、バージョン番号が最も高い行です <code>created_at</code>.&quot;",
+          "children": []
+        },
+        {
+          "text": "「このフィールドは <code>@request_id</code> APIゲートウェイではこう呼ばれ、 <code>trace_id</code> 課金サービスではこう呼ばれています。これらは同じ値です。」",
+          "children": []
+        },
+        {
+          "text": "「StripeのWebhookが実際には処理されていなくても、Stagingでは200が返されます。 <code>payment_events</code> 実際の状態を確認してください。」",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ファイルシステムと段階的な情報開示を活用する"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/d70d147c4c600c297d350ebd7a76f110c879ca670f9e40adb83b05882f71dd8c.png",
+      "caption": "<b>図 B</b> SKILL.md ファイルは、Claude が特定の状況で参照できる他のいくつかのファイルを指し示しています。たとえば、ジョブが保留中の場合は、stuck-jobs.md を参照する必要があります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "先ほども述べたように、スキルとは単なるMarkdownファイルではなく、フォルダそのものです。ファイルシステム全体を、コンテキストエンジニアリングおよび段階的な情報開示の一形態として捉えるべきです。Claudeに、スキルに含まれるファイルを指定すれば、適切なタイミングでそれらのファイルが読み込まれます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "段階的開示の最も単純な形は、Claude が参照する他のマークダウンファイルを指定することです。たとえば、詳細な関数のシグネチャや使用例を <code>references/api.md</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "もう1つの例：最終的な出力がMarkdownファイルである場合、そのテンプレートファイルを <code>assets/</code> にそのテンプレートファイルを同梱し、コピーして使用できるようにします。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeをより効果的に活用するために、リファレンス、スクリプト、サンプルなどをまとめたフォルダを作成することができます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "一方的な押し付けを避ける Claude"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Claudeは概して指示に従おうとします。また、スキルは非常に再利用性が高いため、指示をあまりに具体的にしすぎないよう注意が必要です。に必要な情報は提供しつつ、状況に応じて柔軟に対応できる余地を残しておきましょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例えば："
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/f634d39724ba5a2785fa6a8aa5614a1e4654c1d278a2d73b0e3b7ce0a74d84c4.png",
+      "caption": "<b>図C</b>　各手順ではなく、目標と制約を明記すること。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "設定についてよく考えてみてください"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/c24d1f6d68756396e649a2a1ee89dcde197dad5675e9b75cf17099064345486e.png",
+      "caption": "<b>図 D</b> 上記のスキルは、設定に「Slack」チャンネルが含まれていない場合に、ユーザーに確認を促すように作成されています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルによっては、ユーザーからのコンテキストに基づいて設定を行う必要がある場合があります。たとえば、スタンドアップの内容を Slack に投稿するスキルを作成する場合、Claude を使用して、どの Slack チャンネルに投稿するかを尋ねるように設定するとよいでしょう。"
+    },
+    {
+      "type": "paragraph",
+      "text": "これを行うための良い方法は、上記の例のように、この設定情報をスキルディレクトリ内のconfig.jsonファイルに保存することです。設定が設定されていない場合、エージェントはユーザーに情報を尋ねることができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "エージェントに構造化された多肢選択式の問題を出題させたい場合は、Claudeに「AskUserQuestion」ツールを使用するよう指示することができます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "人間向けではなく、モデル向けの説明文を書いてください"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Codeがセッションを開始すると、利用可能なすべてのスキルとその説明の一覧が作成されます。この一覧は、Claudeが「このリクエストに対応するスキルはあるか」を判断するためにスキャンするものです。つまり、説明フィールドは要約ではなく、このスキルをいつトリガーすべきかを説明するものです。"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/1debbf1fd04f39bcfeb62bcb458574268414bd0f519c4390d708bbac8f1b724e.png",
+      "caption": "<b>図E</b> スキルの説明には、「ベビーシッター」のようなそのスキルに関連するトリガーを含めておくと便利です。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Claudeの思い出を語り継ごう"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/829d6345a17c88a8eb51d616918194402492d1afaba783b00e8b5fdf06b89edf.png",
+      "caption": "<b>図F</b> このテキストログファイルは、Claudeが、サラの承認用プルリクエストのレビューといった過去の出来事を思い出すのに役立ちます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "一部のスキルには、データを内部に保存することで、ある種の記憶機能を備えているものもあります。データの保存先としては、書き込み専用テキストログファイルやJSONファイルといった単純なものから、SQLiteデータベースのような複雑なものまで、あらゆるものが考えられます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "たとえば、ある <code>standup-post</code> スキルは、書き込んだすべての投稿を「standups.log」というファイルに記録しておくことがあります。つまり、次にそのスキルを実行した際、Claudeは自身の履歴を読み取り、昨日から何が変更されたかを把握できるのです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "環境変数 <code>${CLAUDE_PLUGIN_DATA}</code> を使用して、データを保存できる安定したディレクトリを取得できます。スキルにおけるデータの永続化については、こちらをご覧ください：<a href=\"https://code.claude.com/docs/en/plugins-reference#persistent-data-directory\">https://code.claude.com/docs/en/plugins-reference#persistent-data-directory</a>。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "スクリプトの保存とコードの生成"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeに提供できる最も強力なツールの一つがコードです。Claudeにスクリプトやライブラリを提供することで、Claudeは定型コードの再構築に時間を費やすことなく、次の行動を決定する「構成」にターンを費やすことができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "たとえば、 <code>data-science</code> スキルには、イベントソースからデータを取得するための関数のライブラリが用意されているかもしれません。Claudeが複雑な分析を行えるようにするために、次のようなヘルパー関数のセットをに提供することができます："
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/9306b89148d50e676d639a58b675a7461b8df96079f41db272558651be023f5f.png",
+      "caption": "<b>図 G</b> `Claude` に、ドキュメント文字列に注意点（gotchas）が記載されたヘルパー関数の小さなライブラリを用意する。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude これにより、その場でスクリプトを生成してこの機能を組み込み、「火曜日に何が起こったの？」といったプロンプトに対して、より高度な分析を行うことが可能になります。"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/58c7ef840b2a94594f712995ad204a05360a28f0a02c74931a5c238c11426fa5.png",
+      "caption": "<b>図H</b> Claude では、その質問に対応する単発のスクリプトとしてヘルパーを組み合わせています。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "オンデマンドフックの使用"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルには、そのスキルが呼び出されたときにのみ発動し、セッションの期間中のみ有効なフックを含めることができます。これは、常に実行させる必要はないものの、時折非常に役立つような、特定の用途に特化したフックに活用してください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "例えば："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong><code>/careful</code></strong> — Bash上のPreToolUseマッチャーにより、rm -rf、DROP TABLE、force-push、kubectl deleteをブロックします。これは、本番環境にアクセスしていることが確実な場合にのみ有効にするべきです。常に有効にしておくと、気が狂いそうになります。",
+          "children": []
+        },
+        {
+          "text": "<strong><code>/freeze</code></strong> — 特定のディレクトリ以外での編集・書き込みをすべてブロックします。デバッグ中に便利です。「ログを追加したいのに、うっかり関係のないコードを『修正』してしまってしまう」といった場合に役立ちます。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "スキルの活用"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルの最大のメリットの一つは、それをチームの他のメンバーと共有できることです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "他の人とスキルを共有するには、主に2つの方法があります："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "自分のスキルをリポジトリにチェックインしてください（ <code>./.claude/skills</code>)",
+          "children": []
+        },
+        {
+          "text": "<strong>プラグイン</strong>を作成し、ユーザーがプラグインをアップロード・インストールできる「Claude Code」プラグインマーケットプレイスを活用しましょう（詳細についてはこちらの<a href=\"https://code.claude.com/docs/en/plugin-marketplaces\">ドキュメント</a>をご覧ください）。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "リポジトリの数が比較的少ない小規模なチームの場合、スキルをリポジトリにチェックインする方法は有効です。しかし、チェックインされるスキル1つごとに、モデルのコンテキストが少しずつ増えます。規模が拡大するにつれて、内部のプラグインマーケットプレイスを活用することで、スキルを配布し、チームがどのスキルをインストールするかを決定できるようにするとともに、セットアップ手順を含めることも可能になります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "スキル・マーケットプレイスの運営"
+    },
+    {
+      "type": "paragraph",
+      "text": "マーケットプレイスに掲載するスキルは、どのように決めているのですか？また、ユーザーはどのようにスキルを登録するのですか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "Anthropic では、決定を下す一元的なチームは存在しません。その代わりに、最も有用なスキルを自然な形で見つけ出そうとしています。もし誰かが、他の人に試してもらいたいスキルを持っている場合は、GitHub 内のサンドボックスフォルダにそれをアップロードし、Slack やその他のフォーラムでその存在を周知することができます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルがある程度定着したら（その判断はスキル所有者に委ねられます）、マーケットプレイスに掲載するためのプルリクエストを送信することができます。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "作文力"
+    },
+    {
+      "type": "paragraph",
+      "text": "互いに依存し合うスキルを定義したい場合もあるでしょう。 たとえば、ファイルをアップロードする「ファイルアップロード」スキルと、CSVを作成してアップロードする「CSV生成」スキルがある場合です。このような依存関係の管理機能は、現時点ではマーケットプレイスやスキルに標準で組み込まれていませんが、他のスキルを名前で参照するだけで、それらがインストールされていればモデルが自動的に呼び出します。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "測定スキル"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルの運用状況を把握するために、社内のスキル使用状況をログに記録できる「PreToolUse」フックを使用しています（<a href=\"https://gist.github.com/ThariqS/24defad423d701746e23dc19aace4de5\">サンプルコードはこちら</a>）。これにより、人気のあるスキルや、予想に比べて使用頻度が低いスキルを特定することができます。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "はじめに"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルのベストプラクティスは、今もなお進化し続けています。私たちのベストプラクティスの多くは、当初は数行のコードと1つの注意点から始まりましたが、Claudeが新たなエッジケースに直面するたびに、人々が改良を重ねた結果、より良いものになっていきました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "スキルを身につけるには、まず始めてみて、いろいろ試してみて、自分に合う方法を見つけるのが一番です。"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<a href=\"https://code.claude.com/docs/en/skills\">当社のスキルに関するドキュメント</a>をご覧ください",
+          "children": []
+        },
+        {
+          "text": "<a href=\"https://github.com/anthropics/skills\">カスタマイズできるスキルの例を探す</a>",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "<em>この記事は、Anthropicの技術スタッフであり、Claude Codeのプロジェクトに携わっているThariq Shihipar氏によって執筆されました。</em>"
+    }
+  ]
+}
