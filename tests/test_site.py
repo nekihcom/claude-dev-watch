@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from claude_dev_watch.article import Code, Image, Note, Paragraph, Text
+from claude_dev_watch.article import Code, Diagram, Image, Note, Paragraph, Text
 from claude_dev_watch.feed import Entry
 from claude_dev_watch.site import build, inline, render_article
 from claude_dev_watch.store import ContentStore, StoredArticle
@@ -63,3 +63,14 @@ def test_article_escapes_code_and_metadata():
     assert "if a &lt; b: print(&#x27;&lt;x&gt;&#x27;)" in html
     assert 'src="#"' in html
     assert 'href="https://claude.dev/blog/post-1/">原文</a> を参照：FIG A' in html
+
+
+def test_diagram_embeds_sanitized_svg():
+    svg = '<svg class="art-diagram-wide" viewBox="0 0 1 1" onload="alert(1)"><text>Hooks</text></svg>'
+    blocks = [Diagram(Text("フックの<strong>連鎖</strong>"), Text("図の説明"), [svg], "A chain of hooks")]
+    html = render_article(StoredArticle(_entry(1), "題", "要約", blocks, datetime.now(timezone.utc)))
+    assert '<div class="diagram-title">フックの<strong>連鎖</strong></div>' in html
+    assert 'role="img" aria-label="A chain of hooks"' in html
+    assert '<svg class="art-diagram-wide" viewBox="0 0 1 1"><text>Hooks</text></svg>' in html
+    assert "alert" not in html
+    assert "<figcaption>図の説明</figcaption>" in html

@@ -10,8 +10,9 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 
-from .article import Block, Code, Heading, Image, ListBlock, Note, Paragraph, Quote, Table, Text, Video
+from .article import Block, Code, Diagram, Heading, Image, ListBlock, Note, Paragraph, Quote, Table, Text, Video
 from .store import ContentStore, StoredArticle
+from .svg import sanitize_svg
 
 log = logging.getLogger(__name__)
 
@@ -141,6 +142,15 @@ def _block(b: Block, source_url: str) -> str:
             )
         case Video(url=url, caption=c):
             return f'<figure><video src="{_url(url)}" controls preload="none"></video>{_caption(c)}</figure>'
+        case Diagram(label=label, caption=c, svgs=svgs, description=desc):
+            # 保存済みの JSON は手で編集されうるため、取り込み時に加えて出力時にも無害化する
+            draw = "".join(sanitize_svg(svg) for svg in svgs)
+            title = f'<div class="diagram-title">{inline(label.html)}</div>' if label.html else ""
+            return (
+                f'<figure class="diagram">{title}'
+                f'<div class="diagram-draw" role="img" aria-label="{escape(desc or _plain(label))}">{draw}</div>'
+                f"{_caption(c)}</figure>"
+            )
         case Note(label=label, caption=c):
             parts = [inline(x.html) for x in (label, c) if x and x.html]
             detail = f"：{' — '.join(parts)}" if parts else ""
@@ -240,6 +250,69 @@ CSS = """:root {
     --note-bg: #2c2925;
   }
 }
+/* 図の SVG は原文サイトの CSS 変数で色を指定している。値は claude.dev の CSS から写した。
+   サイト側の変数と名前が衝突しないよう、図の中だけで定義する。--bg はサイトの背景色をそのまま使う */
+.diagram {
+  --ink: #141413;
+  --ink-2: #4c4b45;
+  --line: #14141338;
+  --line-soft: #1414131c;
+  --bg-raised: #f1efe8;
+  --bg-panel: #ece9e0;
+  --fig-focal: var(--accent);
+  --viz-muted: #65645e;
+  --viz-wash: var(--bg-raised);
+  --viz-wash-2: var(--bg-panel);
+  --viz-b0: #788c5d;
+  --viz-b1: #b57da8;
+  --viz-b2: #955488;
+  --viz-b3: #763269;
+  --viz-b4: #501a47;
+  --viz-b5: #728eb7;
+  --viz-b6: #4f70a0;
+  --viz-b7: #31507e;
+  --viz-b8: #183053;
+  --viz-b9: #8e8c87;
+  --viz-m1: #3d3d3a;
+  --viz-g0: #b46d4f;
+  --viz-g1: #7a7973;
+  --viz-g2: #86847e;
+  --viz-g3: #9a9892;
+  --fig-series-1: var(--viz-m1);
+  --fig-series-2: var(--viz-muted);
+  --fig-series-3: var(--viz-b9);
+  --fig-dash-1: none;
+  --fig-dash-2: 5 3;
+  --fig-dash-3: 1.5 3;
+  --fig-chart-ink: var(--viz-muted);
+}
+@media (prefers-color-scheme: dark) {
+  .diagram {
+    --ink: #faf9f5;
+    --ink-2: #b0aea5;
+    --line: #faf9f529;
+    --line-soft: #faf9f517;
+    --bg-raised: #1a1a18;
+    --bg-panel: #1e1d1b;
+    --viz-muted: #8f8e87;
+    --viz-wash: #1c1c1a;
+    --viz-wash-2: #20201e;
+    --viz-b1: #925786;
+    --viz-b2: #b776a9;
+    --viz-b3: #d59cc8;
+    --viz-b4: #f2c3e7;
+    --viz-b5: #51709d;
+    --viz-b6: #7191c0;
+    --viz-b7: #98b3db;
+    --viz-b8: #c2d6f2;
+    --viz-b9: #73716c;
+    --viz-m1: #d1cfc5;
+    --viz-g0: #9a5b44;
+    --viz-g1: #8a8983;
+    --viz-g2: #6f6e69;
+    --viz-g3: #5a5955;
+  }
+}
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -290,6 +363,15 @@ a { color: var(--accent); text-underline-offset: 0.2em; }
 .prose figure.code { background: var(--code-bg); border-radius: 6px; overflow: hidden; }
 .prose figure.code figcaption { margin: 0; padding: 0.4rem 1rem; font-size: 0.75rem; border-bottom: 1px solid var(--border); }
 .prose pre { margin: 0; padding: 1rem; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; line-height: 1.6; overflow-wrap: normal; }
+.prose figure.diagram { padding: 1rem; border: 1px solid var(--border); border-radius: 6px; }
+.diagram-title { font-weight: 600; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.75rem; }
+.diagram-draw svg { display: block; width: 100%; height: auto; }
+/* 原文は画面幅に応じて描き分けた 2 枚の SVG を持ち、CSS で片方だけを表示している */
+.diagram-draw .art-diagram-narrow { display: none; }
+@media (max-width: 640px) {
+  .diagram-draw .art-diagram-wide { display: none; }
+  .diagram-draw .art-diagram-narrow { display: block; max-width: 420px; margin-inline: auto; }
+}
 .prose .note { margin: 1.75rem 0; padding: 0.75rem 1rem; background: var(--note-bg); border-radius: 6px; font-size: 0.9rem; color: var(--muted); }
 .table-wrap { overflow-x: auto; margin: 0 0 1.5rem; }
 .prose table { border-collapse: collapse; font-size: 0.9rem; line-height: 1.6; min-width: 100%; }
