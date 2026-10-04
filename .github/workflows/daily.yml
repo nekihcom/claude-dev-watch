@@ -11,27 +11,66 @@ on:
         required: false
         default: ""
 
-# 前回の実行が長引いたときに同じ記事を二重登録しないよう、同時実行を 1 本に制限する
+# 前回の実行が長引いたときに同じ記事を二重に翻訳・コミットしないよう、同時実行を 1 本に制限する
 concurrency:
   group: daily
   cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install .
-      - name: Translate and register
+      - id: install
+        run: pip install .
+      - name: Translate
         env:
           DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           DEEPL_GLOSSARY_ID: ${{ secrets.DEEPL_GLOSSARY_ID }}
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           LIMIT: ${{ inputs.limit }}
         run: claude-dev-watch ${LIMIT:+--limit "$LIMIT"}
+
+      # 一部の記事の翻訳に失敗してジョブが失敗扱いになっても、訳し終えた記事は保存・公開する。
+      # 保存しないと、翌日の実行で同じ記事を訳し直して DeepL の枠を無駄に使うため
+      - name: Commit translations
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          if [ ! -d content ]; then
+            echo "訳文はまだない"
+            exit 0
+          fi
+          git add content
+          if git diff --cached --quiet; then
+            echo "新しい訳文はない"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "訳文を追加する（$(git diff --cached --name-only | wc -l | tr -d ' ') 件）"
+          git pull --rebase
+          git push
+      - name: Build site
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: claude-dev-watch build-site
+      - uses: actions/configure-pages@v6
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+      - uses: actions/upload-pages-artifact@v5
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v5
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}

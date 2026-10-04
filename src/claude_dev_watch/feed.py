@@ -32,7 +32,7 @@ def fetch_entries(feed_url: str = FEED_URL) -> list[Entry]:
         raise RuntimeError(f"RSS を解析できない: {parsed.bozo_exception}")
 
     entries = [_to_entry(e) for e in parsed.entries]
-    # 初回にまとめて登録するとき、Notion 上の登録順を公開順にそろえるため古い順に並べる
+    # DeepL の枠が途中で尽きたとき、新しい記事ではなく古い記事から順に訳し終えるため古い順に並べる
     entries.sort(key=lambda e: e.published or datetime.min.replace(tzinfo=timezone.utc))
     return entries
 

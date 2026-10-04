@@ -1,4 +1,4 @@
-"""--dry-run 用に、中間表現を Markdown にする。Notion に書き込まずに訳文と構造を確認するため。"""
+"""--dry-run 用に、中間表現を Markdown にする。訳文を保存せずに訳文と構造を確認するため。"""
 
 from __future__ import annotations
 

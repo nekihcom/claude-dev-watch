@@ -10,7 +10,8 @@ from .article import fetch_html, iter_texts, parse_article
 from .config import load_env
 from .feed import Entry, fetch_entries
 from .markdown import inline, render
-from .notion import NotionStore, to_blocks
+from .site import build
+from .store import ContentStore, slug_of
 from .translate import DeepLTranslator, IdentityTranslator, Translator, count_characters
 
 log = logging.getLogger("claude_dev_watch")
@@ -24,15 +25,19 @@ def main(argv: list[str] | None = None) -> int:
     load_env()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     # 通信ごとに INFO を出すライブラリがあり、処理の要点が埋もれるため警告以上だけにする
-    for name in ("deepl", "httpx", "httpcore", "notion_client", "urllib3"):
+    for name in ("deepl", "urllib3"):
         logging.getLogger(name).setLevel(logging.WARNING)
+
+    if args.command == "build-site":
+        build(Path(args.content), Path(args.site_out))
+        return 0
 
     entries = fetch_entries()
     log.info("RSS の記事数: %d", len(entries))
 
     store = None
     if not args.dry_run:
-        store = NotionStore(_env("NOTION_TOKEN"), _env("NOTION_DATABASE_ID"))
+        store = ContentStore(Path(args.content))
         known = store.existing_urls()
         entries = [e for e in entries if e.url not in known]
     if args.url:
@@ -57,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             remaining = _process(entry, translator, store, remaining, Path(args.out))
         except QuotaExceeded as e:
-            # 枠が足りないのは失敗ではない。未登録のまま残し、翌月以降の実行で拾わせる
+            # 枠が足りないのは失敗ではない。未保存のまま残し、翌月以降の実行で拾わせる
             _warn(str(e))
             break
         except Exception:
@@ -75,7 +80,7 @@ class QuotaExceeded(Exception):
 
 
 def _process(
-    entry: Entry, translator: Translator, store: NotionStore | None, remaining: int | None, out: Path
+    entry: Entry, translator: Translator, store: ContentStore | None, remaining: int | None, out: Path
 ) -> int | None:
     log.info("処理開始: %s", entry.url)
     blocks = parse_article(fetch_html(entry.url), entry.url)
@@ -95,12 +100,12 @@ def _process(
 
     if store is None:
         out.mkdir(parents=True, exist_ok=True)
-        path = out / f"{entry.url.rstrip('/').rsplit('/', 1)[-1]}.md"
+        path = out / f"{slug_of(entry.url)}.md"
         path.write_text(render(entry, title_ja, summary_ja, blocks), encoding="utf-8")
         log.info("Markdown を出力した: %s（%d 文字）", path, needed)
     else:
-        url = store.create_page(entry, title_ja, summary_ja, to_blocks(blocks))
-        log.info("Notion に登録した: %s（%d 文字）", url, needed)
+        path = store.save(entry, title_ja, summary_ja, blocks)
+        log.info("訳文を保存した: %s（%d 文字）", path, needed)
 
     return None if remaining is None else remaining - needed
 
@@ -124,8 +129,12 @@ def _warn(message: str) -> None:
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="claude.dev ブログの新着記事を日本語訳して Notion に登録する")
-    p.add_argument("--dry-run", action="store_true", help="Notion に書き込まず、Markdown をローカルに出力する")
+    p = argparse.ArgumentParser(description="claude.dev ブログの新着記事を日本語訳して保存し、静的サイトを生成する")
+    p.add_argument("--content", default="content", help="訳文（JSON）の保存先（既定: content）")
+    sub = p.add_subparsers(dest="command")
+    site = sub.add_parser("build-site", help="保存した訳文から GitHub Pages 用のサイトを生成する")
+    site.add_argument("--site-out", default="_site", help="サイトの出力先（既定: _site）")
+    p.add_argument("--dry-run", action="store_true", help="訳文を保存せず、Markdown をローカルに出力する")
     p.add_argument("--limit", type=int, help="処理する記事数の上限（古い順）")
     p.add_argument("--url", help="指定した URL の記事だけを処理する")
     p.add_argument("--no-translate", action="store_true", help="DeepL を呼ばずに原文のまま処理する（構造確認用）")

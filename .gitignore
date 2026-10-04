@@ -7,3 +7,5 @@ out/
 # エディタ拡張がプレビュー用に自動生成する
 *.html
 !tests/fixtures/*.html
+_site/
+content/*.tmp

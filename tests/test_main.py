@@ -4,9 +4,8 @@ from pathlib import Path
 import pytest
 
 from claude_dev_watch import main as main_mod
-from claude_dev_watch.article import Paragraph, Text
 from claude_dev_watch.feed import Entry
-from claude_dev_watch.notion import NotionStore, to_blocks
+from claude_dev_watch.store import ContentStore
 
 HTML = (Path(__file__).parent / "fixtures" / "article.html").read_text(encoding="utf-8")
 
@@ -30,7 +29,7 @@ class FakeStore:
     def existing_urls(self):
         return set(self.known)
 
-    def create_page(self, entry, title_ja, summary_ja, blocks):
+    def save(self, entry, title_ja, summary_ja, blocks):
         self.created.append(entry.url)
         return entry.url
 
@@ -51,11 +50,9 @@ class FakeTranslator:
 @pytest.fixture
 def env(monkeypatch):
     def setup(entries, store, translator, html=lambda url: HTML):
-        monkeypatch.setenv("NOTION_TOKEN", "x")
-        monkeypatch.setenv("NOTION_DATABASE_ID", "x")
         monkeypatch.setenv("DEEPL_API_KEY", "x")
         monkeypatch.setattr(main_mod, "fetch_entries", lambda: entries)
-        monkeypatch.setattr(main_mod, "NotionStore", lambda *a: store)
+        monkeypatch.setattr(main_mod, "ContentStore", lambda *a: store)
         monkeypatch.setattr(main_mod, "DeepLTranslator", lambda *a: translator)
         monkeypatch.setattr(main_mod, "fetch_html", html)
 
@@ -114,57 +111,26 @@ def test_dry_run_writes_markdown(env, tmp_path):
     assert "const x = 1;" in md  # コードは翻訳されない
 
 
-# ---------- NotionStore ----------
+def test_saves_json_and_skips_it_next_time(monkeypatch, tmp_path):
+    content = tmp_path / "content"
+    translator = FakeTranslator(None)
+    monkeypatch.setenv("DEEPL_API_KEY", "x")
+    monkeypatch.setattr(main_mod, "fetch_entries", lambda: [_entry(1)])
+    monkeypatch.setattr(main_mod, "DeepLTranslator", lambda *a: translator)
+    monkeypatch.setattr(main_mod, "fetch_html", lambda url: HTML)
+
+    assert main_mod.main(["--content", str(content)]) == 0
+    assert (content / "post-1.json").exists()
+    assert ContentStore(content).load_all()[0].title_ja == "[ja]Title 1"
+
+    assert main_mod.main(["--content", str(content)]) == 0
+    assert translator.calls == 1
 
 
-class FakeClient:
-    def __init__(self, fail_on_append=False):
-        self.fail_on_append = fail_on_append
-        self.create_children = None
-        self.appended = []
-        self.trashed = []
-        outer = self
-
-        class Pages:
-            def create(self, **kw):
-                outer.create_children = kw["children"]
-                return {"id": "page-1", "url": "https://notion.so/page-1"}
-
-            def update(self, page_id, **kw):
-                outer.trashed.append((page_id, kw))
-
-        class Children:
-            def append(self, block_id, children):
-                if outer.fail_on_append:
-                    raise RuntimeError("api error")
-                outer.appended.append(len(children))
-
-        class Blocks:
-            children = Children()
-
-        self.pages = Pages()
-        self.blocks = Blocks()
-
-
-def _store(client) -> NotionStore:
-    store = NotionStore.__new__(NotionStore)
-    store._client = client
-    store._data_source_id = "ds"
-    return store
-
-
-def test_create_page_appends_in_chunks_of_100():
-    client = FakeClient()
-    blocks = to_blocks([Paragraph(Text(str(i))) for i in range(250)])
-    _store(client).create_page(_entry(1), "t", "s", blocks)
-    # 先頭の原文リンク callout を含めて 251 ブロック
-    assert len(client.create_children) == 100
-    assert client.appended == [100, 51]
-
-
-def test_partial_page_is_trashed_on_failure():
-    client = FakeClient(fail_on_append=True)
-    blocks = to_blocks([Paragraph(Text(str(i))) for i in range(150)])
-    with pytest.raises(RuntimeError):
-        _store(client).create_page(_entry(1), "t", "s", blocks)
-    assert client.trashed == [("page-1", {"in_trash": True})]
+def test_build_site_command(env, tmp_path):
+    env([_entry(1)], ContentStore(tmp_path / "content"), FakeTranslator(None))
+    main_mod.main(["--content", str(tmp_path / "content")])
+    out = tmp_path / "site"
+    assert main_mod.main(["--content", str(tmp_path / "content"), "build-site", "--site-out", str(out)]) == 0
+    assert (out / "index.html").exists()
+    assert (out / "articles" / "post-1.html").exists()
