@@ -46,6 +46,7 @@ jobs:
       # 一部の記事の翻訳に失敗してジョブが失敗扱いになっても、訳し終えた記事は保存・公開する。
       # 保存しないと、翌日の実行で同じ記事を訳し直して DeepL の枠を無駄に使うため
       - name: Commit translations
+        id: commit
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           if [ ! -d content ]; then
@@ -57,6 +58,8 @@ jobs:
             echo "新しい訳文はない"
             exit 0
           fi
+          # 既存の訳文の更新（図の補完など）は通知しないため、新規追加のファイルだけを通知の対象にする
+          echo "added=$(git diff --cached --name-only --diff-filter=A -- content | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "訳文を追加する（$(git diff --cached --name-only | wc -l | tr -d ' ') 件）"
@@ -74,3 +77,14 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v5
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+
+      # 公開に成功してから通知するのは、通知をタップしたときにページがまだない状態を避けるため。
+      # 一部の記事の翻訳に失敗した実行でも、追加された記事は公開済みなので通知する
+      - name: Notify
+        if: ${{ !cancelled() && steps.deploy.outcome == 'success' && steps.commit.outputs.added != '' }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_SERVER: ${{ secrets.NTFY_SERVER }}
+          SITE_URL: ${{ steps.deploy.outputs.page_url }}
+          ADDED: ${{ steps.commit.outputs.added }}
+        run: claude-dev-watch notify --site-url "$SITE_URL" $ADDED
