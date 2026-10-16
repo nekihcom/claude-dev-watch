@@ -1,0 +1,618 @@
+{
+  "url": "https://claude.dev/blog/solving-code-review-at-anthropic/",
+  "title": "How the Claude Code team does code review",
+  "title_ja": "Claude Codeチームによるコードレビューの進め方",
+  "published": "2026-10-15T12:00:00+00:00",
+  "author": "Addy Osmani, Morgan Westlee Lunt, and Qing Wang",
+  "category": "Engineering",
+  "summary": "How do you review code at the volume agents produce it? On the Claude Code team, once we had high coverage and deep reviews, we started optimizing for the minimum amount of human review time that doesn't raise reverts or incidents.",
+  "summary_ja": "エージェントが大量に生成するコードを、どのようにレビューすればよいのでしょうか？Claude Codeチームでは、コードのカバレッジを高め、徹底的なレビューを実施できるようになった後、リバートやインシデントを引き起こさない範囲で、人的レビューの時間を最小限に抑えるよう最適化を進めました。",
+  "translated_at": "2026-10-16T18:34:35.949500+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "以前にも述べたように、ClaudeはClaude Codeのコードの約90％を自ら記述しています。では、これほど大量のコードを生成している中で、どうやってコードレビューを行っているのでしょうか？ そもそも、今どきコードを読む人なんているのでしょうか？ そして、もし何か不具合が発生した場合、誰がそれを発見するのでしょうか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "この記事では、Claude Codeチームのコードレビューの流れと、その変遷について解説します。6月から9月にかけて、Claude Codeのコードベースにマージされたプルリクエストの数は2倍以上に増加した一方で、元に戻す必要があったプルリクエストの割合は40％以上減少しました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "レビュー機能を削除したわけではありません。しかし、読解作業の大部分を機械に移行し、人間の時間と注意力を最大限に活用できるよう最適化するとともに、間違いを素早く簡単に取り消せるようにするために多額の投資を行いました。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "コードレビューの目的を再考する"
+    },
+    {
+      "type": "paragraph",
+      "text": "エージェントがコードを書くようになると、変更の数は急速に増加します。Anthropicのモノレポでは、1日あたりの変更件数が、今年の<a href=\"https://www.anthropic.com/engineering/redesigning-source-control\">5月の</a>約2<a href=\"https://www.anthropic.com/engineering/redesigning-source-control\">,500件から9月には30,000件以上に</a>増加しました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Codeは、モノレポとは別の専用リポジトリに存在していますが、こちらも大きなプレッシャーにさらされています。これほど迅速にリリースを行う場合、手作業による一行ごとのコードレビューは、不可能ではないにせよ、極めて困難です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "コードレビューには2つの役割があります："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "リリース前に問題を発見し、修正する",
+          "children": []
+        },
+        {
+          "text": "チーム全体で共通の認識とコードベースへの理解を深める",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "この記事では主に問題の発見と修正に焦点を当てますが、記事の終盤で2つ目の仕事について改めて触れます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "「人間がコードを読んだか？」という問いは、「この変更で何が問題になり得るか、そしてそれを検出するには、自動化されたチェックと人間によるチェックのどちらが適切か？」という問いに対する、不正確な代用指標に過ぎないと私たちは考えています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "その質問をしたことで、レビューが行われる<em>タイミング</em>も変わりました。以前は、レビューは道の終わりにあるゲートのようなものでした。コードを書き、プルリクエストを開き、同僚の反応を待つ、という流れでした。"
+    },
+    {
+      "type": "paragraph",
+      "text": "現在、レビューは継続的に行われており、執筆中のスペルチェックのようなものです。変更点のほとんどは、人間による確認を依頼される前に、Claudeによって少なくとも一度はレビューされ、修正されています。これにより、日常的なミスのほとんどが検出され、チームはより高度な問題や精査に注力できるようになります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "希少な資源：人間の「時間」と「注意力」"
+    },
+    {
+      "type": "paragraph",
+      "text": "私たちは、人間だけが解決できる課題に、人間の時間と注意力を割けるようにし、それ以外の部分は自動チェックで確実に処理できるようにしたいと考えています。現在の変化のスピードを考えると、人間が担うべき仕事は依然として膨大であり、私たちのチームはほぼ毎日、これまでになかったような新たな課題に直面しています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "人的工数は、レビューにかかるコストの両面、すなわちレビューに費やす時間と、質の悪いコードによって生じた不具合を修正するのに費やす時間の両方を網羅しています。前者を削減しても、その時間が後者に転嫁されてしまっては意味がありません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "したがって、目標は、Claude Codeのリポジトリ（CLI、デスクトップおよびWebアプリ、モバイルアプリ）におけるプルリクエストの大部分が、最大1人の人間（作成者自身を含む）の関与のみでマージされ、かつリバートやインシデントの増加を招かないようにすることです。 人的工数を測定するために、PR 1件あたりの人的承認数（中央値および95パーセンタイル）、人的コメント、および PR が人による処理を待つ時間を追跡しています。リバート率とインシデント率は「ガードレール」の役割を果たします。これらが上昇した場合、人的工数を削減できたわけではなく、単にその負担を移しただけということになります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "「変化の軌跡」"
+    },
+    {
+      "type": "paragraph",
+      "text": "通常、エンジニアのノートパソコン（あるいはSlack上のClaudeセッション）から行われる変更は、複数の段階にわたるコードレビューを経ます。"
+    },
+    {
+      "type": "diagram",
+      "label": "変化の軌跡",
+      "caption": "<b>図A</b> 経路の大部分は自動化されており、人の注意はリスクがある場所に集中する",
+      "svgs": [
+        "<svg aria-hidden=\"true\" class=\"art-diagram-wide\" focusable=\"false\" height=\"522\" id=\"code-review-life-of-a-change\" viewBox=\"2 0 651 522\" width=\"651\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-life-of-a-change text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-life-of-a-change .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<path d=\"M11 33.5 L11 460.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line)\"></path>\n<circle cx=\"11\" cy=\"33.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"33.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 33.5 L10.2 35.8 L14.2 31.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"114.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"114.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 114.5 L10.2 116.8 L14.2 112.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"161.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"161.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 161.5 L10.2 163.8 L14.2 159.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"208.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"208.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 208.5 L10.2 210.8 L14.2 206.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"255.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<polygon points=\"11,248.5 18,255.5 11,262.5 4,255.5\" style=\"fill:var(--fig-focal)\"></polygon>\n<circle cx=\"11\" cy=\"336.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"336.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 336.5 L10.2 338.8 L14.2 334.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"400.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"400.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 400.5 L10.2 402.8 L14.2 398.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"430.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"430.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 430.5 L10.2 432.8 L14.2 428.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"460.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<path d=\"M16.6 462.5 A6 6 0 1 1 14.4 455.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<path d=\"M11.6 453.9 L14.6 455.5 L13.6 458.7\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text class=\"mono\" font-size=\"11\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"14\">BEFORE THE PULL REQUEST</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"38\">The work is verified</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"38\">Claude runs the tests, build and linter; a second agent</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"55\">reviews the diff in a fresh context</text>\n<text class=\"mono\" font-size=\"11\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"95\">ON EVERY PULL REQUEST</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"119\">Required CI</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"119\">Lint, types, tests across platforms, build and packaging. Red</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"136\">blocks the merge</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"166\">Claude code review</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"166\">Agents hunt for bugs in parallel, verifiers vote on each</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"183\">finding, survivors ranked by severity</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"213\">Security review</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"213\">A separate pass. Open findings from either review block the</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"230\">merge</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"260\">Risk-based approval</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"260\">A classifier sets the tier: no person, one, or two. Some paths</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"277\">always need a person</text>\n<text class=\"mono\" font-size=\"11\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"317\">MERGING</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"341\">Merge queue</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"341\">Checks run again on the latest main with the change applied</text>\n<text class=\"mono\" font-size=\"11\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"381\">AFTER THE MERGE</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"405\">Behind a flag, used internally first</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"405\">Anthropic employees run it before it reaches everyone</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"435\">Gradual release</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"435\">The latest channel first; the stable channel trails it</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"465\">Watch, fix forward or roll back</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"465\">The author and on-call watch; flags turn off quickly, broken</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"277\" y=\"482\">builds get reverted</text>\n<circle cx=\"11\" cy=\"511.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"511.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 511.5 L10.2 513.8 L14.2 509.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"26\" y=\"516\">automated</text>\n<circle cx=\"122.66593017578126\" cy=\"511.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<polygon points=\"122.66593017578126,504.5 129.66593017578126,511.5 122.66593017578126,518.5 115.66593017578126,511.5\" style=\"fill:var(--fig-focal)\"></polygon>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"137.66593017578126\" y=\"516\">a person decides, scaled by risk</text>\n<circle cx=\"355.21875244140625\" cy=\"511.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<path d=\"M360.8187524414063 513.5 A6 6 0 1 1 358.61875244140623 506.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<path d=\"M355.8187524414063 504.9 L358.8187524414063 506.5 L357.8187524414063 509.7\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"370.21875244140625\" y=\"516\">recovery</text>\n</svg>",
+        "<svg aria-hidden=\"true\" class=\"art-diagram-narrow\" focusable=\"false\" height=\"797\" id=\"code-review-life-of-a-change-mobile\" viewBox=\"2 0 300 797\" width=\"300\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-life-of-a-change-mobile text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-life-of-a-change-mobile .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<path d=\"M11 34.5 L11 671.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line)\"></path>\n<circle cx=\"11\" cy=\"34.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"34.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 34.5 L10.2 36.8 L14.2 32.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"147.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"147.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 147.5 L10.2 149.8 L14.2 145.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"210.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"210.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 210.5 L10.2 212.8 L14.2 208.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"290.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"290.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 290.5 L10.2 292.8 L14.2 288.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"353.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<polygon points=\"11,346.5 18,353.5 11,360.5 4,353.5\" style=\"fill:var(--fig-focal)\"></polygon>\n<circle cx=\"11\" cy=\"449.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"449.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 449.5 L10.2 451.8 L14.2 447.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"545.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"545.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 545.5 L10.2 547.8 L14.2 543.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"608.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"608.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 608.5 L10.2 610.8 L14.2 606.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<circle cx=\"11\" cy=\"671.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<path d=\"M16.6 673.5 A6 6 0 1 1 14.4 666.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<path d=\"M11.6 664.9 L14.6 666.5 L13.6 669.7\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text class=\"mono\" font-size=\"12.75\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"14\">BEFORE THE PULL REQUEST</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"39\">The work is verified</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"57\">Claude runs the tests, build and linter; a</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"74\">second agent reviews the diff in a fresh</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"91\">context</text>\n<text class=\"mono\" font-size=\"12.75\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"127\">ON EVERY PULL REQUEST</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"152\">Required CI</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"170\">Lint, types, tests across platforms, build</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"187\">and packaging. Red blocks the merge</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"215\">Claude code review</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"233\">Agents hunt for bugs in parallel, verifiers</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"250\">vote on each finding, survivors ranked by</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"267\">severity</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"295\">Security review</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"313\">A separate pass. Open findings from either</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"330\">review block the merge</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"358\">Risk-based approval</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"376\">A classifier sets the tier: no person, one, or</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"393\">two. Some paths always need a person</text>\n<text class=\"mono\" font-size=\"12.75\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"429\">MERGING</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"454\">Merge queue</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"472\">Checks run again on the latest main with</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"489\">the change applied</text>\n<text class=\"mono\" font-size=\"12.75\" font-weight=\"500\" letter-spacing=\"0.08em\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"525\">AFTER THE MERGE</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"550\">Behind a flag, used internally first</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"568\">Anthropic employees run it before it</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"585\">reaches everyone</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"613\">Gradual release</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"631\">The latest channel first; the stable channel</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"648\">trails it</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"676\">Watch, fix forward or roll back</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"694\">The author and on-call watch; flags turn off</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"711\">quickly, broken builds get reverted</text>\n<circle cx=\"11\" cy=\"738.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<circle cx=\"11\" cy=\"738.5\" fill=\"none\" r=\"6.5\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<path d=\"M8 738.5 L10.2 740.8 L14.2 736.3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"743\">automated</text>\n<circle cx=\"11\" cy=\"762.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<polygon points=\"11,755.5 18,762.5 11,769.5 4,762.5\" style=\"fill:var(--fig-focal)\"></polygon>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"767\">a person decides, scaled by risk</text>\n<circle cx=\"11\" cy=\"786.5\" r=\"7\" stroke-width=\"2\" style=\"fill:var(--bg);stroke:var(--bg)\"></circle>\n<path d=\"M16.6 788.5 A6 6 0 1 1 14.4 781.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<path d=\"M11.6 779.9 L14.6 781.5 L13.6 784.7\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-m1)\"></path>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"791\">recovery</text>\n</svg>"
+      ],
+      "description": "A pull request's checks, top to bottom. Before the pull request, the work is verified. On every pull request: required CI, Claude code review and security review, all automated, then a risk-based approval where a person decides. Then the merge queue, and after the merge a feature flag used internally first, a gradual release, and a last step to watch, fix forward or roll back."
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "レイヤー・バイ・レイヤー"
+    },
+    {
+      "type": "diagram",
+      "label": "ゲート1つではなく、複数の層",
+      "caption": "<b>図B</b> 各レイヤーは一部の問題を捕捉する一方で、他の問題を見逃してしまいます。すべてのレイヤーを通過できるものはほとんどなく、残りはロールバックによって処理されます。",
+      "svgs": [
+        "<svg aria-hidden=\"true\" class=\"art-diagram-wide\" focusable=\"false\" height=\"369\" id=\"code-review-layers\" viewBox=\"0 0 651 369\" width=\"651\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-layers text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-layers .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"40\" y=\"14\">problems in</text>\n<path d=\"M188 22 L188 343\" fill=\"none\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M78.8 22 L78.8 54\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M297.2 22 L297.2 54\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M110 65.5 L110 104\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M271.2 115.5 L271.2 154\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M136 165.5 L136 204\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M253 215.5 L253 254\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M99.6 265.5 L99.6 304\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<polygon points=\"40,72 300,72 336,50 76,50\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"61\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"110\" cy=\"61\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"65.5\">verification</text>\n<polygon points=\"40,122 300,122 336,100 76,100\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"111\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"271.2\" cy=\"111\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"115.5\">required CI</text>\n<polygon points=\"40,172 300,172 336,150 76,150\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"161\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"136\" cy=\"161\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"165.5\">AI review</text>\n<polygon points=\"40,222 300,222 336,200 76,200\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"211\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"253\" cy=\"211\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"215.5\">security review</text>\n<polygon points=\"40,272 300,272 336,250 76,250\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"261\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"99.6\" cy=\"261\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"265.5\">human approval</text>\n<polygon points=\"40,322 300,322 336,300 76,300\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"188\" cy=\"311\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"281.6\" cy=\"311\" rx=\"14\" ry=\"4.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"358\" y=\"315.5\">merge queue + flags</text>\n<path d=\"M188 56.5 L188 315.5\" fill=\"none\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<circle cx=\"78.8\" cy=\"59\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"297.2\" cy=\"59\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"110\" cy=\"109\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"271.2\" cy=\"159\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"136\" cy=\"209\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"253\" cy=\"259\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"99.6\" cy=\"309\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<path d=\"M144 341 Q188 369 232 341\" fill=\"none\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<circle cx=\"188\" cy=\"351\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--fig-focal)\" x=\"358\" y=\"355.5\">fast rollback</text>\n</svg>",
+        "<svg aria-hidden=\"true\" class=\"art-diagram-narrow\" focusable=\"false\" height=\"304\" id=\"code-review-layers-mobile\" viewBox=\"0 0 300 304\" width=\"300\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-layers-mobile text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-layers-mobile .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"2\" y=\"14\">problems in</text>\n<path d=\"M82 22 L82 278\" fill=\"none\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M24 22 L24 45\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M140 22 L140 45\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M40.6 55.5 L40.6 85\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M126.2 95.5 L126.2 125\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M54.4 135.5 L54.4 165\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M116.5 175.5 L116.5 205\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<path d=\"M35.1 215.5 L35.1 245\" fill=\"none\" opacity=\".55\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<polygon points=\"2,60 140,60 162,44 24,44\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"52\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"40.6\" cy=\"52\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"56.5\">verification</text>\n<polygon points=\"2,100 140,100 162,84 24,84\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"92\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"126.2\" cy=\"92\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"96.5\">required CI</text>\n<polygon points=\"2,140 140,140 162,124 24,124\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"132\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"54.4\" cy=\"132\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"136.5\">AI review</text>\n<polygon points=\"2,180 140,180 162,164 24,164\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"172\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"116.5\" cy=\"172\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"176.5\">security review</text>\n<polygon points=\"2,220 140,220 162,204 24,204\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"212\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"35.1\" cy=\"212\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"216.5\">human approval</text>\n<polygon points=\"2,260 140,260 162,244 24,244\" stroke-width=\"1\" style=\"fill:var(--line-soft);stroke:var(--line)\"></polygon>\n<ellipse cx=\"82\" cy=\"252\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<ellipse cx=\"131.7\" cy=\"252\" rx=\"10\" ry=\"3.5\" stroke-width=\"1\" style=\"fill:var(--bg);stroke:var(--line)\"></ellipse>\n<text font-size=\"13\" style=\"fill:var(--ink)\" x=\"174\" y=\"256.5\">merge queue + flags</text>\n<path d=\"M82 48.5 L82 255.5\" fill=\"none\" stroke-dasharray=\"3 3\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<circle cx=\"24\" cy=\"50\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"140\" cy=\"50\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"40.6\" cy=\"90\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"126.2\" cy=\"130\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"54.4\" cy=\"170\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"116.5\" cy=\"210\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"35.1\" cy=\"250\" r=\"4.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<path d=\"M48 276 Q82 304 116 276\" fill=\"none\" stroke-width=\"1\" style=\"stroke:var(--fig-focal)\"></path>\n<circle cx=\"82\" cy=\"286\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--fig-focal)\" x=\"174\" y=\"290.5\">fast rollback</text>\n</svg>"
+      ],
+      "description": "Six layers stacked from top to bottom: verification, required CI, AI review, security review, human approval, and merge queue plus flags. Each has holes in different places. Problems falling through a hole are caught by a later layer; one passes through a hole in every layer and lands in fast rollback at the bottom."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. 他の誰かが目を通す前に、その作業は確認される"
+    },
+    {
+      "type": "paragraph",
+      "text": "現在、レビューのほとんどはPRが作成される前に行われています。私たちはClaudeに、テストやビルド、デザインと比較するためのスクリーンショットなど、実行可能なものを与え、「完了」と報告させるのではなく、出力を表示するよう指示します。その後、サブエージェントが新鮮な視点で差分を確認します。これらの習慣は、いずれも当社の<a href=\"https://code.claude.com/docs/en/best-practices\">ベストプラクティスガイド</a>に基づいています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "プルリクエストを開く前に、私たちの多くはいくつかの内部チェックも行っています。ある人はバグを探し、ある人は差分（diff）を整理し、またある人は動作を端から端まで確認します。UIの変更についても、デザインガイドラインに照らしてチェックが行われます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Codeを開発したボリス・チェルニー氏は、Claudeに自身の作業を検証する手段を与えることが、良い結果を得るために<a href=\"https://x.com/bcherny/status/2007179861115511237\">最も重要なことだと</a>述べています。同氏は、これにより最終結果が2～3倍向上すると推定しており、「検証の方法は分野ごとに異なります。 bashコマンドを実行するだけの単純なものもあれば、テストスイートを実行したり、ブラウザやスマホシミュレーターでアプリをテストしたりすることもあるだろう」と記している。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>自動レビューツールが同じ問題を繰り返し指摘する場合は、その根本原因となる箇所、つまり</strong>スキル内、リントルール、または以下のような指示ファイルの更新などで<strong>修正します</strong>："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<code>CLAUDE.md</code> Claudeに、そのプロジェクトの概要（スタック、規約、目標、および目標外事項）を説明します。レビューのたびにこのドキュメントが参照されるため、大規模なコードベースでは内容を簡潔にまとめ、そこから他のドキュメントへのリンクを掲載しています。また、レビュー担当者は、このドキュメントに記載された規約に違反するコードや、このドキュメントの記述を古くしてしまう変更についても、フラグを立てます。",
+          "children": []
+        },
+        {
+          "text": "<code>REVIEW.md</code>, コードの所有者が作成したこのドキュメントは、レビュー担当者に、そのコードの部分で何が重要かを伝えます。レビュー担当者が実際にそれに従っているかどうかは、別途確認します。 優れたガイドラインは簡潔です。そのリポジトリにおいて「失敗」がどのような状態かを明記し（ドキュメントなら「虚偽の記述」、設定ファイルなら「ルーティングミス」など）、些細な指摘は最小限に抑え、スキップすべきパスを列挙し、ファイル名や行番号を根拠として提示するよう求め、単なる推測を避けるようにしています。 また、修正箇所がない場合は、その旨を明記し、件数から始まる要約を提出するよう求めています。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. すべてのプルリクエストに対するAIによるレビュー"
+    },
+    {
+      "type": "paragraph",
+      "text": "すべてのプルリクエストは、人間が確認する前にClaudeによるレビューを受けます。Claudeは、リポジトリ全体との差分とプルリクエストに記載された意図を読み取り、「この変更は問題を解決しているか、システムに適合しているか、あるいは他の部分に不具合を引き起こしていないか」と問いかけます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "バグ修正にあたっては、根本原因を突き止めます。一般公開版である「<a href=\"https://code.claude.com/docs/en/code-review\">Claude Code用コードレビュー</a>」は、TeamプランおよびEnterpriseプランで一般提供が開始されており、 <code>/code-review</code> ローカルでは軽量版が実行されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<a href=\"https://claude.com/resources/articles/code-review\">リサーチプレビュー</a>を開始したところ、実質的なレビューコメントが寄せられる社内PRの割合が16%から54%に上昇しました。 1,000行を超えるPRのほとんどには指摘事項が寄せられ、小規模なPRのほとんどは問題なしと判定されます。管理者は各リポジトリを「クイック」「スタンダード」「ディープ」のいずれかに設定します。「ディープ」は、1つのバグを見逃すことによるコストが、追加のレビューにかかる時間よりも大きい場合に、その価値があります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>発見事項は、人間によるレビューが行われる前に、他のエージェントによって検証されます。</strong>複数のエージェントが同時にバグを探します。その後、別のグループが各発見事項について投票を行い、十分な数のエージェントが「本物」であると合意した場合にのみ、それが公開されます。スタイル、診断情報、またはコードの整理のみに関する発見事項は除外されます。 これらのフィルタは、採用する前に自社のプルリクエストでA/Bテストを行いました。残った項目は、重大度順に並べられたインラインコメントとして表示されます。それぞれに「重要（Important）」「些細な問題（Nit）」「既存の問題（Pre-existing）」というタグが付けられているため、プルリクエストによって新たに発生したものではないバグが、作成者のミスであるかのように見えることはありません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>すべての指摘には対応する必要があります。</strong>修正するか、理由を明記してスレッドをクローズしてください。多くの場合、担当者が夜間に修正を行うため、投稿者は、すでに別のレビューラウンドを経たPRを確認することになります。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. ブロック可能なセキュリティ審査"
+    },
+    {
+      "type": "paragraph",
+      "text": "セキュリティについても、独自の自動レビューが行われます。バグレビューやセキュリティレビューで指摘された事項が未解決のままである限り、プルリクエストをマージすることはできません。修正するか、簡単な理由を添えてスレッドをクローズする必要があります。これが、誤検知を解消する方法です。"
+    },
+    {
+      "type": "paragraph",
+      "text": "後のコミットでその問題が修正されれば、その検出結果は自動的に解消されます。オープンソースのセキュリティレビュー用GitHub Actionや <code>/security-review</code> コマンドを使用して、同様の設定を行うことができます。設定方法については、<a href=\"https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code\">Claude Codeの「自動化されたセキュリティレビュー」</a>で解説されています。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. ブロックする自動チェック"
+    },
+    {
+      "type": "paragraph",
+      "text": "いつもの手順：リンター、型チェック、全プラットフォームでのテスト、そしてビルド。（この規模でのCIのスケーリングについては、<a href=\"https://claude.com/resources/articles/agentic-coding-is-straining-ci-heres-how-we-scaled-test-impact-analysis-at-anthropic\">こちらで</a>解説しています。）一般的なCLIのプルリクエストでは、誰かが内容を確認する前に、数十ものチェックが実行されることがあります。 PRテンプレートには、変更がどのようにテストされたか、また元に戻すにはどうすればよいかを尋ねる項目があります。Claudeがそれを記入することもできますが、最終的な承認は変更を依頼した本人が行います。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. リスクに応じた人的承認"
+    },
+    {
+      "type": "paragraph",
+      "text": "ドキュメントの修正と自動更新機能の変更ではリスクが異なるため、それぞれ異なる審査が行われます。"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "リスク",
+          "例",
+          "人による承認"
+        ],
+        [
+          "低",
+          "ドキュメント、コピー、社内限定機能、フラグ設定による追加変更",
+          "自動レビューとセキュリティチェックの結果が「合格」となれば、それ以上の対応は不要です"
+        ],
+        [
+          "中",
+          "通常の製品変更、およびキャッシュ、自動更新機能、システムプロンプトなどの重要な機能に関する変更",
+          "1人"
+        ],
+        [
+          "高い",
+          "リスクが最も高いコードに加え、常に2人が必要な少数のパス",
+          "2人"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>変更内容によってリスクレベルが決定され、作成者によるものではありません。</strong>分類器が変更内容を解析し、リスクレベルを判定します。別の分類器が、そのリスクレベルでは他者の確認が不要と判定された場合でも、その特定の変更内容について他者の確認が必要かどうかを判断します。常に他者の確認が必要なケースとしては、所有者が「機密」として指定した項目や、CIワークフローファイルなどが挙げられます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>信頼された作成者のみが、より簡略化された承認プロセスを利用できます。</strong>リポジトリの信頼リストに登録されている作成者、主にそのリポジトリを管理するチームのみが、より簡略化された承認プロセスを利用できます。 それ以外のユーザーは、別の担当者による承認が必要です。また、エージェントによる承認は、人間の承認としてカウントされることはありません。自動レビューでは低リスクの変更を承認できますが、人間の承認が必要なケースを代替することはできません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>その変更を指示した人物が責任を負うことになる。</strong>エージェントが作成したPRの場合、エージェントに指示を出した人物は、あたかもその人物自身がコードを記述したのと同様に、必須のレビューアの一人としてカウントされる。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>承認は、特定の1つのコミットに対して行われます。</strong>エージェントによるプッシュや、誰かが手動で解決したマージなど、システムが保証できない新しいコミットが追加された場合、再度承認を行う必要があります。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. キュー、フラグ、および段階的なリリースの統合"
+    },
+    {
+      "type": "paragraph",
+      "text": "マージキューは、変更が適用された状態でメインブランチに対するすべてのチェックを再実行するため、個別にチェックを通過した2つのプルリクエストが結合されて、メインブランチに不具合が生じることはありません。新しい動作は通常、Anthropicの従業員向けにフラグを設定して先行リリースされ、当社での集中的な利用により、ユーザーよりも先にリグレッションが発見されることがよくあります。一般公開版は、まず <code>latest</code> チャンネルに配信されます。 <code>stable</code> チャンネルはそれに続いて提供されます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. 迅速な検出、迅速なロールバック"
+    },
+    {
+      "type": "paragraph",
+      "text": "それでも一部のミスは見逃されてしまうため、最終段階ではそれらを迅速に発見することが重要です。デプロイが行われないとフラグは解除されます。Claude Codeでは毎週オンコール当番制を採用しており、インシデントレビューでは、どの段階でその問題を検知すべきだったかが検討されます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "不適切なマージに気付くかどうかは、依然として作成者や当直担当者、さらにはリバートやインシデントのダッシュボードに依存しています。現時点では、これらの数値が変動した際に承認基準を厳格化するサーキットブレーカーは導入されていません。当社のエンジニアたちは、コードのマージが完全に自動化される前に、こうした機能の導入を望んでいます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "ある同僚は、「ペースを落とせばミスは減るが、それはあくまで、あらゆる作業の量そのものが減るからに過ぎない」と言っていました。私たちとしては、問題に気づき、それを修正するスピードをむしろ上げたいと考えています。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "レビュー担当者のスキル向上に向けた取り組み"
+    },
+    {
+      "type": "paragraph",
+      "text": "当社のコードレビュープロセスは、ループを繰り返しながら絶えず改善されています。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>現在、あらゆるインシデントは評価の対象となっています。</strong>チームは、過去にインシデントを引き起こしたPRを、その修正履歴や元に戻した履歴とともに収集し、そのコードに精通したエンジニアに各バグの内容と発生箇所を確認してもらいました。レビュー担当者は、そのデータセットに対して毎日検証を行っています。"
+    },
+    {
+      "type": "diagram",
+      "label": "当社のインシデントは評価対象です",
+      "caption": "<b>図C</b> 評価値はインシデントが発生するたびに増加し、レビュー担当者に加えられる変更はすべて、その評価値に基づいて採点されます。",
+      "svgs": [
+        "<svg aria-hidden=\"true\" class=\"art-diagram-wide\" focusable=\"false\" height=\"196\" id=\"code-review-incident-eval\" viewBox=\"28 26 651 196\" width=\"651\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-incident-eval text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-incident-eval .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"54\" y=\"44.5\">Incident or revert</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"54\" y=\"62\">a change that broke something</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"271\" y=\"44.5\">Expert-checked case</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"271\" y=\"62\">experts confirm the bug</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"488\" y=\"44.5\">Added to the set</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"488\" y=\"62\">each incident adds a case</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"54\" y=\"154.5\">Change the reviewer</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"54\" y=\"172\">its prompts, tools or model</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"271\" y=\"154.5\">Daily eval run</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"271\" y=\"172\">scored against every case</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"488\" y=\"154.5\">Score went up?</text>\n<text font-size=\"12.5\" style=\"fill:var(--viz-muted)\" x=\"488\" y=\"172\">keep it; if not, drop it</text>\n<path d=\"M181.3 40 L247 40\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M243 36.5 L247 40 L243 43.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M422.6 40 L464 40\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M460 36.5 L464 40 L460 43.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M474 50 L474 104 L257 104 L257 140\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M253.5 136 L257 140 L260.5 136\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M203.4 150 L247 150\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M243 146.5 L247 150 L243 153.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M368.9 150 L464 150\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M460 146.5 L464 150 L460 153.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M474 160 L474 214 L40 214 L40 160\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M36.5 164 L40 160 L43.5 164\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" text-anchor=\"middle\" x=\"257\" y=\"207\">next change</text>\n<circle cx=\"40\" cy=\"40\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"257\" cy=\"40\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"474\" cy=\"40\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"40\" cy=\"150\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"257\" cy=\"150\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"474\" cy=\"150\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n</svg>",
+        "<svg aria-hidden=\"true\" class=\"art-diagram-narrow\" focusable=\"false\" height=\"306\" id=\"code-review-incident-eval-mobile\" viewBox=\"0 0 300 306\" width=\"300\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-incident-eval-mobile text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-incident-eval-mobile .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"14\">Incident or revert</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"32\">a change that broke something</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"66\">Expert-checked case</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"84\">experts confirm the bug</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"118\">Added to the set</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"136\">each incident adds a case</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"170\">Daily eval run</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"188\">scored against every case</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"222\">Score went up?</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"240\">keep it; if not, drop it</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"46\" y=\"274\">Change the reviewer</text>\n<text font-size=\"13\" style=\"fill:var(--viz-muted)\" x=\"46\" y=\"292\">its prompts, tools or model</text>\n<path d=\"M30 19.5 L30 51.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M26.5 47.5 L30 51.5 L33.5 47.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M30 71.5 L30 103.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M26.5 99.5 L30 103.5 L33.5 99.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M30 123.5 L30 155.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M26.5 151.5 L30 155.5 L33.5 151.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M30 175.5 L30 207.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M26.5 203.5 L30 207.5 L33.5 203.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M30 227.5 L30 259.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M26.5 255.5 L30 259.5 L33.5 255.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M20 269.5 L8 269.5 L8 165.5 L20 165.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<path d=\"M16 162 L20 165.5 L16 169\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<circle cx=\"30\" cy=\"9.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"30\" cy=\"61.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"30\" cy=\"113.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"30\" cy=\"165.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"30\" cy=\"217.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n<circle cx=\"30\" cy=\"269.5\" r=\"5.5\" stroke-width=\"2\" style=\"fill:var(--viz-m1);stroke:var(--bg)\"></circle>\n</svg>"
+      ],
+      "description": "An incident or revert becomes an expert-checked case and is added to the eval set. A change to the reviewer goes into the daily eval run, scored against every case; the change is kept if the score went up and dropped if not, and the loop starts again with the next change."
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>私たちは、ユーザーがコメントに対してどのような対応をするかを観察することで、ノイズを測定しています。</strong>バグではないものをたくさんフラグ付けしても構わないという姿勢であれば、より多くのバグを見つけやすくなりますが、そのためには適切なチェックが必要です。 レビュー担当者が残したすべてのコメントを、PRの担当者がどのように対応したか（修正した、誤りだと指摘した、その動作は意図的だと説明した、あるいは問題ないと判断した）という基準で分類しています。 また、問題がないと分かっているプルリクエストに対してもレビューツールを実行し、誰かが有害な変更を行う原因となり得た問題を報告した頻度をカウントしています。私たちの優先順位は、文書化されている通り、まず真のバグを検出すること、次にレビューの回数を減らすことです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "著者がエージェントの場合、ノイズによるコストは高くなります。個人なら些細なミスは数秒で片付けることができますが、エージェントが修正することになると、新たなコミットと、それに伴う再レビューが必要になります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<strong>レビューは収束させなければならない。</strong>エージェントの作成者とレビュー担当者は、互いに延々と作業を続けさせ合う可能性がある。あるCLIのプルリクエストは、作成者が中止するまで、一晩のうちに50回以上のレビューと修正を繰り返した。"
+    },
+    {
+      "type": "paragraph",
+      "text": "レビュー担当者が繰り返し指摘していた箇所に対して「git blame」を実行したところ、その約59％は、レビュー担当者が最初にチェックした時点からすでに存在していたコードでした。レビュー担当者が新しいバグを発見することはほとんどなく、各ラウンドごとに、以前からあったバグをいくつか追加で発見していたに過ぎませんでした。"
+    },
+    {
+      "type": "paragraph",
+      "text": "事態を悪化させたのは私たち自身でした。各パスで新たな問題が見つかるため、デフォルトで数ラウンドのレビューを行うことに慣れてしまっていたのです。これはリスクの高い変更では有効かもしれませんが、すべてのプルリクエストでそうすべきではありません。チームでは現在、リコール率とともに「パスまでのラウンド数」も追跡しており、再レビューの仕組みを変更しました："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>ラウンド・キャップ。</strong>3ラウンドを経た後、レビュアーは著者に一歩引いて、アプローチを再考するよう求める。",
+          "children": []
+        },
+        {
+          "text": "最初の数回のパス終了後の、<strong>差分のみを対象とした再レビュー</strong>。",
+          "children": []
+        },
+        {
+          "text": "<strong>バグの種類を明記して、</strong>作成者が1行だけでなくすべての箇所を修正できるようにしましょう。",
+          "children": []
+        },
+        {
+          "text": "すでに投稿済みの発見内容の<strong>重複は避けてください</strong>。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "また、レビューエージェントは毎晩既存のコードに対して実行され、古いバグが別の場所で発生する前に発見するのに役立っています。"
+    },
+    {
+      "type": "diagram",
+      "label": "収束するレビュー",
+      "caption": "<b>図 D：</b>収束の変更後、内部プルリクエストあたりのレビュー回数が減少した",
+      "svgs": [
+        "<svg aria-hidden=\"true\" class=\"art-diagram-wide\" focusable=\"false\" height=\"253\" id=\"code-review-convergence\" viewBox=\"0 0 651 253\" width=\"651\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-convergence text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-convergence .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"14\">Pass after one review and fix round</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"234.0\" x=\"2\" y=\"26\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"244\" y=\"37\">65%</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"280.8\" x=\"2\" y=\"46\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"290.8\" y=\"57\">78%</text>\n<path d=\"M2 76 L647 76\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line-soft)\"></path>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"96\">Need five or more rounds</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"32.0\" x=\"2\" y=\"108\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"42.04\" y=\"119\">8.9%</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"5.4\" x=\"2\" y=\"128\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"15.4\" y=\"139\">1.5%</text>\n<path d=\"M2 158 L647 158\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line-soft)\"></path>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"178\">Mean reviews to pass</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"249.6\" x=\"2\" y=\"190\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"259.6\" y=\"201\">2.08</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"158.4\" x=\"2\" y=\"210\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"168.4\" y=\"221\">1.32</text>\n<rect height=\"10\" style=\"fill:var(--viz-b9)\" width=\"10\" x=\"2\" y=\"239\"></rect>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"18\" y=\"248\">before</text>\n<rect height=\"10\" style=\"fill:var(--fig-focal)\" width=\"10\" x=\"84.26945755004883\" y=\"239\"></rect>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"100.26945755004883\" y=\"248\">after the convergence work</text>\n</svg>",
+        "<svg aria-hidden=\"true\" class=\"art-diagram-narrow\" focusable=\"false\" height=\"273\" id=\"code-review-convergence-mobile\" viewBox=\"0 0 300 273\" width=\"300\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-convergence-mobile text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-convergence-mobile .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"14\">Pass after one review and fix round</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"149.5\" x=\"2\" y=\"26\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"159.5\" y=\"37\">65%</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"179.4\" x=\"2\" y=\"46\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"189.39999999999998\" y=\"57\">78%</text>\n<path d=\"M2 76 L296 76\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line-soft)\"></path>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"96\">Need five or more rounds</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"20.5\" x=\"2\" y=\"108\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"30.47\" y=\"119\">8.9%</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"3.4\" x=\"2\" y=\"128\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"13.45\" y=\"139\">1.5%</text>\n<path d=\"M2 158 L296 158\" fill=\"none\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--line-soft)\"></path>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"2\" y=\"178\">Mean reviews to pass</text>\n<rect height=\"14\" style=\"fill:var(--viz-b9)\" width=\"159.5\" x=\"2\" y=\"190\"></rect>\n<text font-size=\"13\" font-weight=\"400\" style=\"fill:var(--ink-2)\" x=\"169.5\" y=\"201\">2.08</text>\n<rect height=\"14\" style=\"fill:var(--fig-focal)\" width=\"101.2\" x=\"2\" y=\"210\"></rect>\n<text font-size=\"13\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"111.2\" y=\"221\">1.32</text>\n<rect height=\"10\" style=\"fill:var(--viz-b9)\" width=\"10\" x=\"2\" y=\"239\"></rect>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"18\" y=\"248\">before</text>\n<rect height=\"10\" style=\"fill:var(--fig-focal)\" width=\"10\" x=\"2\" y=\"259\"></rect>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"18\" y=\"268\">after the convergence work</text>\n</svg>"
+      ],
+      "description": "Before and after the convergence work: pull requests passing after one review and fix round rose from 65% to 78%; pull requests needing five or more rounds fell from 8.9% to 1.5%; mean reviews to pass fell from 2.08 to 1.32."
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "人間が常にプロセスに関与し続ける場所"
+    },
+    {
+      "type": "paragraph",
+      "text": "熟練エンジニアを「ディープワーク」から引き離して、ありふれたミスを見つけ出すには、自動レビューを行うよりもはるかに大きなコストがかかります。Anthropicでは、私たちの仕事は、すべての差分を確認することから、機械が苦手とする意思決定へと移行しています："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>そもそもこれを構築すべきなのか？</strong>　方向性、好み、そして範囲について。レビューのボトルネックが解消されたと宣言したあるチームでさえ、チーム外からの変更については依然として人間によるレビューを維持していたため、誰かが「そもそもこれを行うべきなのか？」と問うている。",
+          "children": []
+        },
+        {
+          "text": "課金機能、自動更新機能、CIワークフローなどの<strong>リスクの高いコード</strong>。",
+          "children": []
+        },
+        {
+          "text": "他者が模倣するようになるような<strong>建築</strong>。",
+          "children": []
+        },
+        {
+          "text": "<strong>証拠を確認する。</strong>テスト結果、実行したコマンドとその出力内容、スクリーンショット、レビュー担当者の所見など。チェックでは見落とされる可能性がある点を特定できない場合は、安易に承認するのではなく、本格的なレビューを依頼してください。",
+          "children": []
+        },
+        {
+          "text": "<strong>結果に対する責任。</strong>リリースされるすべての変更については、誰がコードを書いたかに関わらず、その担当者が責任を負う。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "diagram",
+      "label": "ある人が決断するとき",
+      "caption": "<b>図E</b>　人々は、すべての差分を確認する作業から、機械が苦手とする判断を行う作業へと移行した",
+      "svgs": [
+        "<svg aria-hidden=\"true\" class=\"art-diagram-wide\" focusable=\"false\" height=\"264\" id=\"code-review-humans\" viewBox=\"0 22 651 264\" width=\"651\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-humans text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-humans .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<circle cx=\"325\" cy=\"150\" fill=\"none\" r=\"96\" stroke-dasharray=\"3 4\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></circle>\n<circle cx=\"373.0\" cy=\"66.9\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"398.5\" cy=\"88.3\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"420.6\" cy=\"158.4\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"412.0\" cy=\"190.6\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"349.8\" cy=\"242.7\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"308.3\" cy=\"244.5\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"241.9\" cy=\"198.0\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"229.9\" cy=\"163.4\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"253.7\" cy=\"85.8\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"284.4\" cy=\"63.0\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"325\" cy=\"54\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" text-anchor=\"middle\" x=\"325\" y=\"38\">Should we build it?</text>\n<circle cx=\"416.3\" cy=\"120.3\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" text-anchor=\"start\" x=\"433.4\" y=\"119.3\">Risky code</text>\n<circle cx=\"381.4\" cy=\"227.7\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" text-anchor=\"start\" x=\"392\" y=\"246.7\">Architecture</text>\n<circle cx=\"268.6\" cy=\"227.7\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" text-anchor=\"end\" x=\"258\" y=\"246.7\">Reading the evidence</text>\n<circle cx=\"233.7\" cy=\"120.3\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" text-anchor=\"end\" x=\"216.6\" y=\"119.3\">Owning the outcome</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" text-anchor=\"middle\" x=\"325\" y=\"146\">automated checks</text>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" text-anchor=\"middle\" x=\"325\" y=\"164\">run all the way around</text>\n<circle cx=\"207\" cy=\"275.5\" r=\"3.5\" style=\"fill:var(--viz-b9)\"></circle>\n<text font-size=\"12.5\" style=\"fill:var(--ink-2)\" x=\"215\" y=\"280\">an automated check</text>\n<circle cx=\"345\" cy=\"275.5\" r=\"5\" style=\"fill:var(--fig-focal)\"></circle>\n<text font-size=\"12.5\" style=\"fill:var(--ink-2)\" x=\"355\" y=\"280\">a person decides</text>\n</svg>",
+        "<svg aria-hidden=\"true\" class=\"art-diagram-narrow\" focusable=\"false\" height=\"287\" id=\"code-review-humans-mobile\" viewBox=\"0 0 300 287\" width=\"300\" xmlns=\"http://www.w3.org/2000/svg\"><style>#code-review-humans-mobile text{font-family:'Anthropic Sans','Anthropic Sans Fallback','Anthropic Sans Fallback Roboto',system-ui,sans-serif}#code-review-humans-mobile .mono{font-family:'Anthropic Mono','Anthropic Mono Fallback',ui-monospace,'SF Mono',Menlo,monospace}</style>\n<path d=\"M12 5 L12 229\" fill=\"none\" stroke-dasharray=\"3 4\" stroke-linejoin=\"round\" stroke-width=\"1\" style=\"stroke:var(--viz-muted)\"></path>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"26\">Should we build it?</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"78\">Risky code</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"118\">Architecture</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"170\">Reading the evidence</text>\n<text font-size=\"14\" font-weight=\"500\" style=\"fill:var(--ink)\" x=\"32\" y=\"210\">Owning the outcome</text>\n<circle cx=\"12\" cy=\"5\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"21.5\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"45\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"57\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"73.5\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"97\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"113.5\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"137\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"149\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"165.5\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"189\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"205.5\" r=\"6\" stroke-width=\"2\" style=\"fill:var(--fig-focal);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"229\" r=\"3.5\" stroke-width=\"2\" style=\"fill:var(--viz-b9);stroke:var(--bg)\"></circle>\n<circle cx=\"12\" cy=\"254.5\" r=\"3.5\" style=\"fill:var(--viz-b9)\"></circle>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"259\">an automated check</text>\n<circle cx=\"12\" cy=\"276.5\" r=\"5\" style=\"fill:var(--fig-focal)\"></circle>\n<text font-size=\"13\" style=\"fill:var(--ink-2)\" x=\"32\" y=\"281\">a person decides</text>\n</svg>"
+      ],
+      "description": "Automated checks run throughout, with five points where a person decides: should we build it, risky code, architecture, reading the evidence, and owning the outcome."
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "チーム全体で状況を共有する"
+    },
+    {
+      "type": "paragraph",
+      "text": "コードレビューのもう一つの役割は、常にコードベースへの理解を広めることでした。チームメイトのdiffを読むことで、何が変更されたのか、そして各部分がどのように組み合わさっているのかを学ぶことができるのです。もし機械が読み込みの大部分を担うようになったら、一体どうやってコードを学べばよいのでしょうか？"
+    },
+    {
+      "type": "paragraph",
+      "text": "これに関する正式なプロセスは設けていません。チームメンバーの誰も、Claude Codeの全体像を頭の中に完全に把握しているわけではなく、また、その必要もないと考えています。誰かがコードベースの一部を理解したいと思ったときは、Claudeに、その部分についてのみ解説文を作成するよう依頼します。これには数分しかかからず、現在のコードの状態を正確に反映した内容になります。"
+    },
+    {
+      "type": "image",
+      "url": "https://claude.dev/media/d4fafcbf3d2137bc64eb7f0707ba91809ff1ed4d098785e36d7422b3b07f6c40.png",
+      "caption": null
+    },
+    {
+      "type": "paragraph",
+      "text": "中には、さらに一歩踏み込んで、Claudeにコードのその部分を可視化する小さなツールを作ってもらい、その人が好む学習方法に合わせて教えてもらう人もいる。"
+    },
+    {
+      "type": "paragraph",
+      "text": "人間の注意力を有効に活用することが目的なら、これは些細な変更点を一行ずつ読み込むよりもはるかに有益です。たった1行のコピー変更からは、ほとんど何も学べません。一方、これから変更しようとしているモジュールに関する解説文からは、多くのことを学べます。また、オープンなSlackチャンネルで作業することを基本とする私たちの文化も役立っています。なぜなら、他の人が何を作っているかを、実際に作っている最中に見ることができるからです。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "「成功させれば、それが自分のものになる」"
+    },
+    {
+      "type": "paragraph",
+      "text": "小規模または中規模の変更を実施したにもかかわらず、何か問題が発生した場合、通常はチームとしてそれを修正するのが慣例となっています。事態が悪化しないようにするためのポイントは以下の通りです："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>変更点は些細なものなので、</strong>レビューやデバッグ、元に戻す作業も簡単です。",
+          "children": []
+        },
+        {
+          "text": "<strong>すべては元に戻せます。</strong>フラグ、リバート、ステージングリリースを使えば、ほとんどのミスを数分で取り消すことができます。",
+          "children": []
+        },
+        {
+          "text": "<strong>影響範囲が基準となる。</strong>コストのかかるコードほど、より多くの人が関与し、より多くのチェックが行われる。",
+          "children": []
+        },
+        {
+          "text": "テレメトリや社内での利用を通じて、<strong>回帰バグがすぐに表面化します</strong>。",
+          "children": []
+        },
+        {
+          "text": "<strong>これは非難ではありません。</strong>「修正の責任」を負うということは、その件について最も詳しい状況を把握していることを意味します。インシデントレビューでは、システム全体を検証するものです。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "所有権も共有されています。チームの多くは<a href=\"https://claude.com/product/tag\">オープンなチャンネル</a>で作業しており、誰でも他のメンバーが何を作っているかを確認したり、議論に加わったり、Claudeを使って改善すべき点を指摘したりできます。また、コードの所有者ではないメンバーからもフィードバックが寄せられます。このオープンな姿勢こそが、すべての行にチェックポイントを設けることなく、品質を高く維持できる大きな要因となっています。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "方向転換するとき"
+    },
+    {
+      "type": "paragraph",
+      "text": "エージェントのおかげで、新しい取り組みを安価に始められるため、一部の作業は採用されないこともあります。通常、チャネル内の誰かがその理由を尋ねたり、以前の決定を指摘したり、よりシンプルな方法を提案したりすると、作成者はPRをクローズするか、内容を修正します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "コードを書くのは早かったので、PRをクローズしても損をしたような気はしません。コツは、完了したPRに対する妨げになるようなコメントとしてではなく、スレッドの早い段階で別の方向性を提示することです。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "このプロセスを導入する方法"
+    },
+    {
+      "type": "paragraph",
+      "text": "チームでこれを実現するための要素のほとんどは、すでに揃っています。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "プルリクエストの前に"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "エージェントが実行できるチェックを、短いリストにまとめて提供してください <code>CLAUDE.md</code>、さらにフォーマッターやリンターを実行するためのフックを指定してください。",
+          "children": []
+        },
+        {
+          "text": "実行 <code>/code-review</code> を実行し、 <code>/security-review</code> ローカルで実行するか、新しいコンテキストのサブエージェントによるレビューを行う。",
+          "children": []
+        },
+        {
+          "text": "[ <code>REVIEW.md</code>を追加し、重複しているレビューコメントをそこに移動してください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "すべてのプルリクエストにおいて"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "CIを必須とし、プルリクエスト（PR）テンプレートに「テスト」、「リスク」、「元に戻す方法」を追加してください。",
+          "children": []
+        },
+        {
+          "text": "あるリポジトリにAIレビューア（Claude Code用のコードレビュー、またはClaude CodeのGitHub Action）を追加し、 <code>REVIEW.md</code> 数週間かけて調整し、その後適用範囲を広げていく。",
+          "children": []
+        },
+        {
+          "text": "自動化されたセキュリティレビューを追加し、マージ前にすべてのレビュースレッドを解決することを義務付ける。",
+          "children": []
+        },
+        {
+          "text": "レビューの取り組みとリスクのバランス：日常的な変更には「クイック」なレビューを、見逃したバグが大きな損失につながるような変更には「ディープ」なレビューを行う（コードレビューの「クイック」「スタンダード」「ディープ」）。",
+          "children": []
+        },
+        {
+          "text": "変更点のレビューを段階的に行う。最初の数回を終えた後は、新たに追加された変更点のみを再レビューする。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "承認"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "リスクレベルを、作成者ではなく変更内容に基づいて設定し、書き留めておくこと。最初は厳格に設定し、根拠が得られ次第、緩和していく。",
+          "children": []
+        },
+        {
+          "text": "信頼できる著者に対しては、審査プロセスを簡略化したままにしておきましょう。",
+          "children": []
+        },
+        {
+          "text": "CODEOWNERS とブランチ保護機能を活用し、認証、課金、CI、リリースワークフロー、およびインストーラーの操作には常に担当者が関与するようにします。",
+          "children": []
+        },
+        {
+          "text": "ボットによる承認を、必要な人間による承認の代わりにしてはなりません。新しいコミットに対する承認は却下してください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "マージ後"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "マージキュー、フィーチャーフラグ、内部先行利用、段階的なリリース、およびワンステップロールバックを活用してください。",
+          "children": []
+        },
+        {
+          "text": "インシデントやリバートを評価セットに変換し、プロンプト、ツール、またはモデルが変更されるたびに、レビュアーのスコアを再算出します。",
+          "children": []
+        },
+        {
+          "text": "「リバート率」と「インシデント率」を安全基準として、人間の作業時間を測定する。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "この先どうなるのか"
+    },
+    {
+      "type": "paragraph",
+      "text": "Code Reviewの<a href=\"https://claude.com/resources/articles/code-review\">発表</a>によると、プルリクエストの承認は依然として人間の判断に委ねられており、同製品が提示するのは「承認」ではなく「指摘事項」である。当社独自のリポジトリではさらに一歩進んでおり、所有者が低リスクの変更について、自動チェックの結果のみに基づいてマージするかどうかを決定できるようにしている。そして、その基準は常に変化し続けている。"
+    },
+    {
+      "type": "paragraph",
+      "text": "レビューで見落としがあった場合、モデルに何が提示されていなかったのかを突き止め、その修正を <code>CLAUDE.md</code>、スキル、あるいは新しいチェックとして実装します。目標は変わっていません。変更1件あたりの人的工数を削減し、以前と同程度のロールバック数に抑えることです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "チームでエージェントによるプルリクエストの作成を許可している場合、どのようなチェックを自動化しているか、どのチェックには依然として人の手が必要か、また当社の説明に誤りがあると思われる点について、ぜひご意見をお聞かせください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<em>エマ・ウェッブ、マイケル・セグナー、そしてエイミー・ロザラムに、レビューをしていただいたことに感謝します。</em>"
+    }
+  ]
+}
