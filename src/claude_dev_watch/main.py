@@ -10,6 +10,7 @@ from .article import fetch_html, iter_texts, parse_article
 from .config import load_env
 from .feed import Entry, fetch_entries
 from .markdown import inline, render
+from .notify import notify
 from .refresh import refresh_figures
 from .site import build
 from .store import ContentStore, slug_of
@@ -35,6 +36,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "refresh-figures":
         refresh_figures(ContentStore(Path(args.content)))
         return 0
+    if args.command == "notify":
+        return notify([Path(p) for p in args.paths], args.site_url)
 
     entries = fetch_entries()
     log.info("RSS の記事数: %d", len(entries))
@@ -139,6 +142,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     site = sub.add_parser("build-site", help="保存した訳文から GitHub Pages 用のサイトを生成する")
     site.add_argument("--site-out", default="_site", help="サイトの出力先（既定: _site）")
     sub.add_parser("refresh-figures", help="保存済みの訳文の図を原文から補う（DeepL は呼ばない）")
+    notify_p = sub.add_parser("notify", help="新しく追加された訳文を ntfy で通知する")
+    notify_p.add_argument("--site-url", required=True, help="公開サイトの URL（通知をタップしたときの遷移先）")
+    notify_p.add_argument("paths", nargs="*", help="新しく追加された訳文（content/<slug>.json）")
     p.add_argument("--dry-run", action="store_true", help="訳文を保存せず、Markdown をローカルに出力する")
     p.add_argument("--limit", type=int, help="処理する記事数の上限（古い順）")
     p.add_argument("--url", help="指定した URL の記事だけを処理する")
