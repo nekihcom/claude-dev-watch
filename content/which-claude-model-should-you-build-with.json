@@ -1,0 +1,566 @@
+{
+  "url": "https://claude.dev/blog/which-claude-model-should-you-build-with/",
+  "title": "Which Claude model should you build with? Fable, Opus, Sonnet, or Haiku",
+  "title_ja": "Claudeのどのモデルで制作すべきでしょうか？ Fable、Opus、Sonnet、それともHaiku？",
+  "published": "2026-11-09T12:00:00+00:00",
+  "author": "Addy Osmani",
+  "category": "Playbooks",
+  "summary": "Which Claude model to pick, what they cost, and how to use them together.",
+  "summary_ja": "どのClaudeモデルを選ぶべきか、その価格、そしてそれらを組み合わせて使う方法。",
+  "translated_at": "2026-11-09T23:40:41.946931+00:00",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "現在のClaudeのラインナップには、一般販売されている4つのモデルがあります。Claude Haiku 5.5、Claude Sonnet 5.5、Claude Opus 5.5、そしてClaude Fable 5.2です。Claude Mythos 5.2は、サイバーセキュリティおよびライフサイエンス研究において最も高性能なモデルであり、当社の検証プログラムを通じてご利用いただけます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeプラットフォーム上で開発を行ったり、Claude Codeで作業したりする場合、一般的なタスクにはどのモデルを使用すべきか迷うことがあるかもしれません。この記事では、その疑問への答えと、トレードオフについてどのように考えるべきかについて解説します。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/c5d7df0a1f47ff734b6d8c6e050bbb99217ca37684b34f154e6939b14c06c99d.mp4",
+      "caption": "<b>図A</b> 路地を写した1枚の写真。Claude Haiku 5.5、Sonnet 5.5、Opus 5.5、Fable 5.2によってコードで描画されたもの。各画像は、モデルが作成したPythonプログラムであり、同じくモデルが作成した描画エンジンを呼び出して、最初のレイヤーから完成までを描いている。デモ：ランス・マーティン。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "要約"
+    },
+    {
+      "type": "paragraph",
+      "text": "簡単に言えば、Opus 5.5 での作業のほとんどは、デフォルトの工数レベルで開始すべきです。 <code>medium</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "これがClaude Codeのデフォルトモデルとなっているのには理由があります。入力トークンおよび出力トークンあたりのコストがFable 5.2の半分であり、ほとんどのコーディングや知識作業において、まずここから始めることをお勧めするモデルだからです。"
+    },
+    {
+      "type": "paragraph",
+      "text": "そこから："
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "バグ修正や仕様に基づいた機能開発など、範囲が明確な日常業務には「Sonnet 5.5」を使用してください。ただし、仕様が明確だからといって、必ずしもSonnetを使用すべきというわけではありません。 移行作業やパフォーマンスの最適化は、明確な仕様があっても十分に困難な場合があり、Opus 5.5、あるいは大規模な場合はFable 5.2の使用が正当化されることがあります。",
+          "children": []
+        },
+        {
+          "text": "さらに下にスクロールして、分類、ルーティング、抽出といった最も単純な大量処理には「Haiku 5.5」をご利用ください。「Haiku 5.5」は、より大規模なモデルのサブタスクを担当するサブエージェントとの併用にも適しています。",
+          "children": []
+        },
+        {
+          "text": "コーディング、金融、科学分野における最も難易度の高い技術プロジェクトには、「Claude Fable 5.2」へのアップグレードをお勧めします。また、「Opus 5.5」の性能が <code>high</code> それでも不十分な場合や、長時間無人での実行が必要な場合にも、アップグレードしてください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "モデルを切り替える前に、まず作業レベルを調整してみてください。これは、コストと機能の両面において、よりきめ細かな調整が可能です。 <code>high</code>、努力レベルを1段階上げるだけで、より大きなモデルを導入するのと同じくらいのコストがかかることもあります。ですから、ご自身の作業内容に基づいて両者を比較してみてください。もし <code>high</code>、その場合は、一つ上のモデルを低い労力で試してみてください。逆に、一つ下のレベルにすれば、より低い料金で必要な結果が得られる場合もあります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "モデルがより長く思考したり、より多くのツールを呼び出したり、自身の処理結果をより詳細に確認したりする必要がある場合、エフォートレベルを上げることで役立ちます。ただし、それによってレイテンシが増加することにも留意してください。また、エフォートレベルを上げても、モデルが本来持っていない知識やスキルが得られるわけではありません。それを実現するには、やはりより上位のモデルに切り替える必要があります。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "用途別にモデルを選ぶ"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "タスク",
+          "エントリーモデル",
+          "取り組みの開始",
+          "なぜ"
+        ],
+        [
+          "日々のエンジニアリングとデバッグ。複数のPRにわたる機能開発",
+          "Opus 5.5",
+          "<code>medium</code> (デフォルト) の場合、 <code>high</code>",
+          "日常的な作業におけるコストと機能性のバランス。"
+        ],
+        [
+          "分類、ルーティング、タグ付け、および大量データの抽出",
+          "Haiku 5.5",
+          "<code>medium</code> (デフォルト)",
+          "このモデルファミリーの中で、コストとレイテンシが最も低い。"
+        ],
+        [
+          "ファイルを検索したり、ログを読み取ったり、要約を作成したりするサブエージェント",
+          "Haiku 5.5 または Sonnet 5.5",
+          "モデルのデフォルト設定",
+          "間違った答えは簡単に見分けがつくし、いずれにせよ判断を下すのはメインモデルだ。"
+        ],
+        [
+          "チャットや双方向セッション",
+          "Sonnet 5.5（あるいは、大人数での気軽なチャットには Haiku 5.5）",
+          "<code>low</code> または <code>medium</code>",
+          "Sonnet 5.5は高速で、特に <code>low</code> あるいは <code>medium</code> 努力。"
+        ],
+        [
+          "バグ修正、機能の反復開発、仕様書に基づいた作業など、範囲が明確に定義されたコーディング",
+          "Sonnet 5.5",
+          "<code>medium</code>、そして <code>high</code> より難しいタスクについては",
+          "Opus 5.5のトークン価格の半額で、スコープ指定されたタスクをうまく処理してくれます。"
+        ],
+        [
+          "日常的に使う文書、スライド、スプレッドシート",
+          "Sonnet 5.5",
+          "<code>high</code> (デフォルト; <code>medium</code> Claude Code内）",
+          "処理速度が速く、デザイン面でも優れたセンスを備えています。複雑な財務モデルや、大量の資料を基に作成する文書には、Opus 5.5 から始めてみてください。"
+        ],
+        [
+          "調査、確認、草案作成など、繰り返し行うエージェントのタスク",
+          "Sonnet 5.5",
+          "<code>中</code>",
+          "明確に定義された反復的なタスクでは、より大規模なモデルが必要になることはめったにありません。"
+        ],
+        [
+          "コンピュータの使用と視覚に負荷のかかる業務プロセス",
+          "Opus 5.5",
+          "<code>中</code>",
+          "これらの実行は、多数のスクリーンショットや画像にわたる長いエージェントループであり、まさに『Opus 5.5』が想定しているような、長期にわたるエージェント型作業です。"
+        ],
+        [
+          "大規模なリファクタリングや移行、アーキテクチャの計画、および多数のサブエージェントの統括",
+          "Fable 5.2",
+          "<code>medium</code>, その後 <code>high</code> （APIのデフォルトは <code>high</code>)",
+          "これは、Anthropicが技術分野向けに一般提供しているモデルの中で、最も高性能なものです。"
+        ],
+        [
+          "綿密な調査、および科学的・定量的な分析",
+          "Fable 5.2",
+          "<code>medium</code>, その後 <code>high</code> （APIのデフォルトは <code>high</code>)",
+          "これは、コーディング、金融、科学分野における最も困難な技術プロジェクトに対応するために開発されました。"
+        ],
+        [
+          "まだよくわからない",
+          "Opus 5.5",
+          "<code>medium</code> (デフォルト)",
+          "Claude Codeでは、Pro、Max、Ultra、Team、Enterprise、およびAnthropic APIにおいて、これがデフォルトで使用されており、プラットフォームのドキュメントでもこれを最初の設定として推奨しています。"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "4つのモデルを並べて比較"
+    },
+    {
+      "type": "table",
+      "has_header": true,
+      "rows": [
+        [
+          "",
+          "Haiku 5.5",
+          "Sonnet 5.5",
+          "Opus 5.5",
+          "Fable 5.2"
+        ],
+        [
+          "<strong>対象として設計された</strong>",
+          "処理量が多く、コスト重視の業務",
+          "範囲が明確に定められたタスクに対し、迅速かつ的確なサポートを提供します",
+          "複雑なコーディングや知識労働を行うための、私たちの日常使いのツール",
+          "最も野心的で、結末が定まっていない技術的な取り組み"
+        ],
+        [
+          "<strong>相対レイテンシ</strong>",
+          "最速",
+          "速い",
+          "中程度",
+          "中程度"
+        ],
+        [
+          "<strong>入出力（100万トークンあたり）</strong>",
+          "10万トークンまでのプロンプトは0.10ドル／0.50ドル、10万トークンを超える場合は0.50ドル／2.50ドル",
+          "2ドル／10ドル",
+          "4ドル／20ドル",
+          "8ドル／40ドル"
+        ],
+        [
+          "<strong>100万トークンあたりのキャッシュ読み取り回数</strong>",
+          "10万まで0.01ドル、10万超は0.05ドル",
+          "0.10ドル",
+          "0.20ドル",
+          "0.20ドル"
+        ],
+        [
+          "<strong>コンテキストウィンドウ</strong>",
+          "1Mトークン",
+          "100万トークン",
+          "1Mトークン",
+          "1Mトークン"
+        ],
+        [
+          "<strong>最大出力</strong>",
+          "128Kトークン",
+          "128Kトークン",
+          "128Kトークン",
+          "128Kトークン"
+        ],
+        [
+          "<strong>APIについて考える</strong>",
+          "適応型で、デフォルトではオンになっていますが、オフにすることもできます",
+          "適応型、デフォルトで有効； <code>between_tools</code> 事前の検討を省略する",
+          "適応性が高く、常に稼働中",
+          "適応性が高く、常に稼働中"
+        ],
+        [
+          "<strong>APIのデフォルトの処理</strong>（Claude Code<strong>の場合は</strong>異なる場合があります。 <code>/effort status</code> ここではあなたのコードを表示しています）",
+          "<code>中</code>",
+          "<code>high</code> (<code>medium</code> （Claude Code内）",
+          "<code>中</code>",
+          "<code>high</code> (<code>medium</code> （Claude Code内）"
+        ],
+        [
+          "<strong>高速モード</strong>",
+          "いいえ",
+          "いいえ",
+          "はい",
+          "はい"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "価格はClaude APIの定価です。ベンチマーク結果については、「<a href=\"https://www.anthropic.com/claude/fable\">Fable</a> <a href=\"https://www.anthropic.com/claude/fable\">5.2」</a>の<a href=\"https://www.anthropic.com/claude/fable\">ページ</a>をご覧ください。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/fbb65d6e837fa666cd299a517960de215dab52aaf70d4a59f654d8164383d4c7.mp4",
+      "caption": "<b>図B：</b>Claudeの「Fable 5.2」、「Opus 5.5」、「Sonnet 5.5」、および「Haiku 5.5」が、それぞれ同じポートフォリオサイトを構築しており、それらが並べて表示されています。デモ作成：Addy Osmani。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "トレードオフ"
+    },
+    {
+      "type": "paragraph",
+      "text": "モデルを選ぶ際には、トレードオフが生じます。例えば、より大きなモデルを選ぶということは、レイテンシよりも処理能力を優先することを意味します。以下に、検討すべき主なトレードオフを挙げます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "完了したタスクごとの処理能力とコスト"
+    },
+    {
+      "type": "paragraph",
+      "text": "一般的に、大規模なモデルほどトークンあたりのコストが高く、性能も優れていますが、タスクレベルで見ると、コストと性能のトレードオフが常に当てはまるわけではありません。"
+    },
+    {
+      "type": "paragraph",
+      "text": "トークンあたりの価格が高いからといって、必ずしもタスクあたりのコストが高くなったり、結果が良くなったりするわけではありません。「<a href=\"https://claude.dev/blog/spending-your-effort/\">努力の配分</a>」で示したように、AnthropicによるTerminal-Bench 3.0の実行結果では、以前のFable 5.1は <code>max</code> 58.0%のスコアを記録したのに対し、Opus 5.5は <code>high</code> では、半分のトークン数で58.9%のスコアを記録しました。"
+    },
+    {
+      "type": "paragraph",
+      "text": "最も困難な作業においては、価格差が縮まる可能性があります。FrontierCode 2.0では、Fable 5.2が <code>high</code> Opus 5.5（ <code>max</code> （45.3% 対 45.5%）でほぼ同等のスコアを記録し、タスクあたりのコストはおよそ半分でした。したがって、Opus 5.5を <code>high</code> に設定する前に、Fable 5.2を試してみてください。日常的な作業については、Opus 5.5 at <code>medium</code> が依然として最初の選択肢となります。ベンチマーク結果については、<a href=\"https://www.anthropic.com/claude-fable-and-mythos-5-2\">リリース記事</a>をご覧ください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "しかし、Claudeプラットフォームによる<a href=\"https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence\">コストと知能の測定</a>結果からは、小型モデルの限界も明らかになっている。こうしたモデルは、一般的に、検証可能な出力を伴う大量の処理には適しているが、長いエージェントループにはあまり向いていない。"
+    },
+    {
+      "type": "paragraph",
+      "text": "2つのモデルを比較する際は、典型的なタスクだけでなく、セットの中で最も処理が困難なタスクのコストも算出してください。なぜなら、最も処理が困難なタスクがコストの大部分を占めるからです。ある20問からなる検索ベンチマークでは、2つの問題だけでコストの43％を占めていました。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/256138a2f0c93acabc4e4c891626530d7df56bf9eca51b6a9b92b100b7af3ccd.mp4",
+      "caption": "<b>図C「</b>Fable 5.2<b>」</b>は、ゲームエンジンがどのように世界を構築するかを示しています。この図では、1つの3Dシーンを、ワイヤーフレームやピクセルアートからレイトレーシングに至るまで、16種類の表現方法で描き出し、それぞれの技法にラベルを付けています。デモ制作：ダン・ファイン。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "レイテンシと精度のトレードオフ"
+    },
+    {
+      "type": "paragraph",
+      "text": "セットアップが速ければ作業は早く終わりますが、見落としも増える可能性があります。モデルと労力のレベルを決める前に、相手がどれくらい待てるかをよく考えてください。相手が返信を待っている場合は、Sonnet 5.5を <code>low</code> または <code>medium</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "多くの場合、次世代モデルは前世代モデルよりも高速です。Fable 5.2は、Fable 5.1に比べて最大30%高速に出力を生成します。Sonnet 5.5は、Sonnet 5に比べて30%高速に動作します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "処理負荷とレイテンシにはおおむね相関関係があります。得られる精度が、その追加のレイテンシに見合うものかどうかを判断してください。たとえば、SWE-bench Proでは、Opus 5.5は <code>medium</code> 「effort」設定に比べて約70％のコストで、スコアが約2.5ポイント低くなりました。 <code>high</code> 設定では、スコアが約2.5ポイント低くなりました。 <code>low</code> では、コストが約3分の1の状態で、スコアが約8ポイント低くなりました。 <code>xhigh</code> では、コストが2.5倍になる一方で、スコアは約1.4ポイント高くなりました。 <code>high</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "多くの場合、自己検証の手段を提供することは、努力の度合いを変更するよりも費用対効果が高く、遅延も少なくて済みます。モデルがタスクに対して十分な性能を発揮していない場合は、以下の手順を順に実行してください："
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "テスト、ビルド、またはエンドポイントを呼び出すスクリプトなどを用いて、モデルが自身の処理結果を検証できることを確認してください。",
+          "children": []
+        },
+        {
+          "text": "努力を1段階上げる。",
+          "children": []
+        },
+        {
+          "text": "一つ上のモデルに移行する際は、前の小さいモデルで行ったときよりも低い負荷レベルから始めてください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "結果を自動的に確認できる場合は、すべてを低レベルで実行し、失敗した部分のみを高いレベルで再実行してください。同じ SWE-bench Pro サブセットにおいて、Opus 5.5 では <code>low</code> で、失敗したタスクを <code>high</code> で失敗したタスクのみを再実行する設定では、タスクの約97％を1つあたり約0.17ドルで通過させました。これに対し、すべてのタスクを <code>high</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "同じモデルからより迅速な応答が必要な場合は、機能を犠牲にする代わりに、速度に対して追加料金を支払うことができます。Claude APIでは、「Opus 5.5」と「Fable 5.2」の両方が<a href=\"https://platform.claude.com/docs/en/build-with-claude/fast-mode\">高速モード</a>を提供しており、プレミアム料金を支払うことで出力速度が向上します。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "コストとのバランス"
+    },
+    {
+      "type": "paragraph",
+      "text": "現行世代のモデルはすべて、1Mトークンのコンテキストウィンドウを備えています。コンテキストが大きいとモデルがタスクを完了しやすくなりますが、各ターンでコンテキストを再送信する必要があるため、ターンごとにコストがかかります。とはいえ、<a href=\"https://claude.com/blog/claude-opus-5-5-built-for-coding-sessions-that-use-more-context\">長時間の実行では</a>、<a href=\"https://claude.com/blog/claude-opus-5-5-built-for-coding-sessions-that-use-more-context\">入力の大部分はキャッシュ読み取りとして処理されます</a>。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Opus 5.5では、キャッシュ読み取りにつき100万トークンあたり0.20ドルが課金され、Sonnet 5.5では0.10ドルが課金されます。 Fable 5.2も同様に$0.20を課金するため、キャッシュを多用する長時間の実行においては、FableとOpusの差はキャッシュされていない入出力に集約され、その部分ではFableの方がトークンあたり2倍のコストがかかります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "「<a href=\"https://claude.dev/blog/what-a-task-costs-on-opus-5-5/\">Opus</a> <a href=\"https://claude.dev/blog/what-a-task-costs-on-opus-5-5/\">5.5におけるタスクのコスト」</a>によると、コンテキストが15万トークンの場合、1ターンあたりのキャッシュ読み取りコストは約0.03ドルです。2万トークンの場合は、約0.004ドルとなります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "ここから得られる教訓の一つは、メインモデルが大きければ大きいほど、メインコンテキストを簡潔に保つことが重要になるということだ。コストのかかるモデルは意思決定のためのコンテキストを保持し、詳細な読み取り作業はコストの低いサブエージェントに任せるべきである。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Haiku 5.5 は、プロンプトの長さによってトークン単価が変動する唯一のモデルです。10万トークンまでのプロンプトは低価格帯で課金され、10万トークンを超えるプロンプトはその5倍の料金が適用されます。長文プロンプトの料金帯でも、Sonnet 5.5 のトークン単価の4分の1のコストに抑えられています。 したがって、Haiku 5.5は短いプロンプトで最も費用対効果が高く、その場合のコストはSonnet 5.5の入力価格の20分の1となります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "すべてのコールに長いプロンプトが必要な場合は、定価ではなく、完了したタスクあたりのコストで「Haiku 5.5」と「Sonnet 5.5」を比較してください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "混合モデル"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/c8e9be266023661b9979d9af80bb8bc3e45766be6f55eb6726c788217b64e6d7.mp4",
+      "caption": "<b>図D</b> 1つのプロジェクトに4つのモデルがあり、それぞれが異なる種類の作業を担当しています。ClaudeのFable 5.2は、オンラインショップのコードをJavaScriptからTypeScriptへ移行し、Opusの5.5は月額制サブスクリプションを構築します。 Sonnet5.5は商品ページを作成し、Haiku5.5は顧客からのメッセージを分類します。Opus5.5は、Fable5.2の新しいコードが導入され次第、機能の提供を開始します。デモ：ダン・ファイン。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "自然な区切りで切り替える"
+    },
+    {
+      "type": "paragraph",
+      "text": "プロンプトキャッシュは、それを書き込んだモデルに属します。新しいモデルでの最初のターンでは、会話全体に対してキャッシュ書き込みコストが発生します。そのターンを短くするには、 <code>/compact</code> Claude Codeで最初に実行するか、短い計画文を用意して新しいセッションを開始してください。APIでは、新しいモデルの会話を開始する際、完全な履歴ではなく、これまでの作業の要約から始めるようにしてください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "各思考ブロックには、それを生成したモデルが記録されており、各モデルは他の特定のモデルのブロックのみを読み取ります。Claude APIおよびGoogle Cloud上のClaudeモデル（Google管理）では、Opus 5.5はSonnet 5.5およびHaiku 5.5の思考ブロックを読み取ります。 Sonnet 5.5はHaiku 5.5の思考ブロックを読み取ります。Fable 5.2はOpus 5.5、Sonnet 5.5、およびHaiku 5.5の思考ブロックを読み取ります。Claude API上では、Fable 5.1はOpus 5.5の思考ブロックを読み取ります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "1段階下のモデルに移行すると、それ以前の推論は失われます。これは、モデルがそれより上位のモデルのブロックを読み取ることは決してないためです。その他の移行でも、推論が失われることがあります。新しいモデルが以前のモデルの推論ブロックを読み取れない場合、APIはそれらを破棄しますが、リクエストは依然として成功します。その後、新しいモデルはその推論なしに動作します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "<a href=\"https://platform.claude.com/docs/en/build-with-claude/preserved-thinking\">保存された推論では</a>、すべてのケースが列挙されます。Fable 5.2 から他の一般提供モデルへ移行すると、その推論は失われます。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "サブエージェントを小規模なモデルに配置する"
+    },
+    {
+      "type": "paragraph",
+      "text": "サブエージェントは独自のコンテキストウィンドウで実行され、要約を返します。そのトークン代金は、サブエージェントが実行されるモデルの料金体系に基づいて支払われます。Claude Codeでは、次のように設定します。 <code>model: haiku</code> または <code>model: sonnet</code> をサブエージェントの定義に設定します。 <code>CLAUDE_CODE_SUBAGENT_MODEL</code> 環境変数は、モデルを指定していないサブエージェントのデフォルト値を設定します。"
+    },
+    {
+      "type": "paragraph",
+      "text": "これを次のように保存してください <code>.claude/agents/log-reader.md</code>:"
+    },
+    {
+      "type": "code",
+      "code": "---\nname: log-reader\ndescription: Reads test output and logs, and reports each failing case. Use after a test run.\ntools: Read, Grep, Glob, Bash\nmodel: haiku\n---\n\nRead the logs you're given. For each failure, report the file, the test name and the first error line. Don't edit any files.",
+      "language": "Markdown"
+    },
+    {
+      "type": "paragraph",
+      "text": "ファイルの検索、テストの実行、ログの確認など、ミスが発見されやすく、その影響も小さい作業には、小規模なモデルを使用しましょう。コードの編集や判断を要する作業は、メインモデルに任せてください。小規模なモデルが検索結果を誤って解釈すると、メインモデルが間違ったファイルを開き、その処理にトークンを消費してしまいます。"
+    },
+    {
+      "type": "video",
+      "url": "https://claude.dev/media/950d272911f41476f75100a3b79841d819cb624f5a702082e58e46bae75d3557.mp4",
+      "caption": "<b>図 E</b> 閲覧者が、標高、自転車ルート、霧、気温などのレイヤーをリクエストします。Opus 5.5 が作業を計画し、並列に動作する Haiku 5.5 のサブエージェントが、共有マップ上に各要素を描画します。 気温はあくまで一例であり、霧は予測ではなく印象として表現されています。地図データ © OpenStreetMap 貢献者；標高データは USGS 3DEP ライダーより。デモ作成：Lance Martin。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code の現在のバージョンでは、組み込みの Explore サブエージェントは、常に Haiku 上で実行されるのではなく、ユーザーのセッションのモデル上で実行されます。Claude API では、そのモデルの上限は Opus となっています。探索のコストを抑えるには、 <code>Explore</code> で定義してください <code>model: haiku</code>という名前の独自のサブエージェントを定義してください。 <code>haiku</code> aliasが使用するモデルを <code>ANTHROPIC_DEFAULT_HAIKU_MODEL</code>."
+    },
+    {
+      "type": "paragraph",
+      "text": "Anthropic API では、 <code>haiku</code> エイリアスは現在、Haiku 5.5 に解決されるようになり、これには Claude Code v2.1.293 以降が必要です。Amazon Bedrock、Google Cloud、Microsoft Foundry、および AWS 上の Claude Platform では、依然として Haiku 4.5 に解決されます。詳細については、Claude Code の<a href=\"https://code.claude.com/docs/en/model-config\">モデル設定ドキュメント</a>をご参照ください。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Codeには、 <code>opusplan</code> エイリアスがあり、これはプランモードでOpusを用いて計画を立て、その後Sonnetでその計画を実行します。これにより、コードの編集はSonnet上で行われます。上記のアドバイスはこれとは逆の動作をします。メインモデル上でコードの編集を行い、ミスが発見しやすい部分のみを小さなモデルに処理させます。 <code>opusplan</code> 。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "難しい決断はアドバイザーに委ねる"
+    },
+    {
+      "type": "paragraph",
+      "text": "<a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/advisor-tool\">アドバイザー・ツール</a>（ベータ版）は、より高速で低コストなエグゼキュータ・モデルと、より強力なアドバイザー・モデルを組み合わせたものです。エグゼキュータはタスクを実行し、その途中でアドバイザーに助言を求めることができます。 トークンの大部分は、エグゼキュータの料金体系に基づいて課金されます。アドバイザーは、エグゼキュータに欠けている機能を提供できる場合にのみ支援を行い、エグゼキュータが助言を求めたときにのみ介入します。エグゼキュータが助言を求める頻度は、作業負荷が低いほど少なくなります。"
+    },
+    {
+      "type": "paragraph",
+      "text": "効果が期待できる場面：ほとんどのターンが定型的なエージェント型作業。このプラットフォームのコストガイドは慎重な見方を示している。アドバイザー表に掲載されている4つの組み合わせのうち、実行者単独を明らかに上回るものはなく、アドバイザーは実行者が相談した場合にのみ支援できる。まずは実行者の相談頻度を測定しよう。 実行エージェントがどのアドバイザーを受け入れるかを確認してください。例えば、Sonnet 5.5の実行エージェントはFable 5.2、Opus 5.5、Opus 5、Sonnet 5.5を受け入れますが、Fable 5.2の実行エージェントはFable 5.2またはMythos 5.2のみを受け入れます。"
+    },
+    {
+      "type": "paragraph",
+      "text": "あまり意味がない点：その組み合わせの一つは、Opus 5.5 エグゼキュータと <code>high</code> Fable 5.1アドバイザーとの組み合わせによるもので、内部コーディングベンチマークで1回あたり2.92ドルのコストで90.1％のスコアを記録した。これは、Opus 5.5単体での <code>high</code> 約2.1倍のコストを要した。この程度の向上幅は実行ごとのばらつきの範囲内であり、労力を増やした際に得られる成果とほぼ同等である。"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "大量作業を賃金の安い労働者に委託する"
+    },
+    {
+      "type": "paragraph",
+      "text": "前述のサブエージェントは、1つのメインモデルがスレッドを管理している間に、副次的なタスクを処理します。このパターンは、1つのコンテキストウィンドウを超える規模の作業を対象としています。最上位のモデルが主導し、タスクを分割して、その断片を多数の低コストなワーカーに並行して渡し、戻ってきた結果を統合します。 約2,200万トークンのソースコードを対象とした内部の欠陥検索ベンチマークにおいて、Opus 5.5がSonnet 5.5ワーカー（最大25台同時稼働）を指揮した場合、デフォルトの設定でOpus 5.5単体を使用する場合に比べてコストが約3分の1削減されました。性能はほぼ同等でした。"
+    },
+    {
+      "type": "paragraph",
+      "text": "Claudeプラットフォームでは、「Claude Managed Agents」の<a href=\"https://platform.claude.com/docs/en/managed-agents/multiagent-orchestration\">マルチエージェントオーケストレーション機能</a>により、コーディネーターエージェントとワーカーのリストが提供されます。 依存関係のある一連のステップや、1つのコンテキストウィンドウに収まる作業については、この処理を省略してください。そのような場合、計画やマージにかかるコストが、それによって得られる節約を上回ってしまいます。<a href=\"https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop\">サブエージェントをメインのエージェントループに組み込むべきタイミングについては、</a>1つのエージェントループがサブエージェントのチームよりも優れている場合について解説します。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "移行前に互換性を確認してください"
+    },
+    {
+      "type": "paragraph",
+      "text": "モデルの選択は、主に性能とコストの問題ですが、モデル名だけを変えて他の設定はそのままにしておくことが常にできるとは限りません。現在のすべてのモデルはツールの使用と画像入力をサポートしていますが、あるモデルから別のモデルへリクエストを移行する前に、テストすべき違いがあります。"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<strong>Fable 5.2 では、保存された思考がすべての API アカウントに適用されるようになりました。</strong>Fable 5.2 の思考ブロックの前にあるもの（システムプロンプト、ツール、以前のメッセージなど）が変更された場合、影響を受ける思考を破棄するように設定していない限り、API はそのリクエストを 400 エラーで拒否します。 Claude Code、Claude Agent SDK、または Claude Managed Agents を通じてリクエストを構築している場合は、何も変更する必要はありません。独自のコードで履歴を編集する場合は、追記専用（append-only）に保ち、切り替え前にテストを行ってください。",
+          "children": []
+        },
+        {
+          "text": "<strong>思考。</strong>Opus 5.5 と Fable 5.2 は常に思考を行っており、思考を無効にするリクエストを行うとエラーが返されます。Sonnet 5.5 はデフォルトで思考を行いますが、 <code>between_tools</code> ツール呼び出し間の隙間に限定して思考を行います。Haiku 5.5はデフォルトで思考を行いますが、 <code>high</code> 「effort」またはそれ以下のレベルで思考を無効にできます。これらすべてにおいて、コンテンツブロックは <code>type</code>で読み込む必要があります。レスポンスが思考ブロックで始まる可能性があるためです。",
+          "children": []
+        },
+        {
+          "text": "<strong>工具の使用を強制される。</strong>A <code>tool_choice</code> の <code>any</code> または <code>tool</code> Sonnet 5.5、Opus 5.5、およびFable 5.2では400エラーが返されます。 <code>auto</code>、ツールをマークし <code>strict: true</code>し、プロンプトでいつそれを使うかを指定してください。",
+          "children": []
+        },
+        {
+          "text": "<strong>コンピュータでの利用。</strong>Opus 5.5、Sonnet 5.5、Haiku 5.5、および Fable 5.2 は、 <code>computer_toolset_20260801</code> Claude APIのツールセットおよびGoogle Cloud上のClaudeモデル（Google管理）を通じてのみ、コンピュータでの利用に対応しています。",
+          "children": []
+        },
+        {
+          "text": "<strong>Haiku 4.5 から Haiku 5.5 へ。</strong> <code>budget_tokens</code> を「努力レベル」に置き換え、デフォルト以外の <code>temperature</code>, <code>top_p</code> および <code>top_k</code> 値は削除してください。これらは400エラーを返します。 <code>messages</code> はユーザーのターンで終了させること。モデルが継続するための最後のアシスタントのターンも400エラーを返すためである。",
+          "children": []
+        },
+        {
+          "text": "<strong>安全性のフォールバック。</strong>Opus 5.5、Sonnet 5.5、およびFable 5.2では、主にサイバーセキュリティや生物学関連のコンテンツをフラグ付けする安全分類器が実行されます。 Claude Codeでは、フラグが立てられたリクエストは古いモデルで再実行することができ、トランスクリプト内の通知でどのモデルが使用されたかがわかります。Fable 5.2は、Fable 5.1で使用されているフォールバックモデルを引き続き採用しています。フラグが立てられたサイバーセキュリティ関連のリクエストはOpus 4.8に、生物学関連のリクエストはOpus 5にフォールバックします。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "1つのシステムで複数のモデルを実行する場合、最も厳格なモデルの仕様に合わせてすべてのリクエストを構築してください。履歴は追記専用とし、 <code>tool_choice: auto</code> 厳格なツールを使用して書き込みを行い、コンテンツブロックは <code>type</code>、プロンプトやツールの説明は、最も文字通りの解釈をするモデルでも理解できるほど正確に記述してください。そうすれば、コードを変更することなく、ステップをティアの上下へ移動させることができます。ルーティングルールが単純な場合（例えば、ステップの種類ごとに1つのモデルといった場合）、モデルに選択を任せるのではなく、コード側でモデルを選定するようにしてください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "自分の作品で測ってみよう"
+    },
+    {
+      "type": "paragraph",
+      "text": "上記のSWE-bench ProやTerminal-Benchの数値のような公表された結果から、初期モデルを構築できます。その後、実際に採用を決める前に、候補となるモデルを自社のタスクでテストしてください。"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        {
+          "text": "実際のタスクをいくつか選び出します。それぞれのタスクについて、テストの合格、チケットのクローズ、行数の正確さなど、成果の確認項目を記述します。",
+          "children": []
+        },
+        {
+          "text": "各候補モデルを2～3つの負荷レベルで実行し、実行間でキャッシュが共有されないよう、それぞれを個別のセッションで行う。各タスクの完了にかかるコストを、 <code>usage</code> フィールドから記録します。",
+          "children": []
+        },
+        {
+          "text": "スコアと費用をプロットする。そのグラフ上のすべての単一モデルによるポイントを上回る場合のみ、マルチモデルの構成を維持する。",
+          "children": []
+        },
+        {
+          "text": "本番環境への切り替えを行う前に、実際のトラフィックの一部で、選定されたソリューションをシャドウ環境で稼働させてみてください。",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Claude Code で手っ取り早く確認するには、バックログにあるタスクを 2 つのモデルで実行し、 <code>/model</code> バックログから1つのタスクを2つのモデルで実行し、 <code>/usage</code> 結果がどう異なるか比較してみてください。"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "詳細はこちら"
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        {
+          "text": "<a href=\"https://claude.dev/blog/building-with-claude-sonnet-5-5/\">『Building with Claude Sonnet 5.5』</a>では、Opus ではなく Sonnet を選ぶべき場合、価格、移行、およびチューニングについて解説しています。",
+          "children": []
+        },
+        {
+          "text": "<a href=\"https://claude.dev/blog/getting-the-most-out-of-opus-5-5/\">ClaudeおよびClaude CodeにおけるOpus 5.5の活用法では、</a>Opus 5.5へのプロンプトの与え方や、ロングランの誘導方法について解説しています。",
+          "children": []
+        },
+        {
+          "text": "<a href=\"https://claude.dev/blog/what-a-task-costs-on-opus-5-5/\">Opus 5.5 において、あるタスクのコストは</a>、労力、モデルの選択、およびサブエージェントによって決まります。",
+          "children": []
+        },
+        {
+          "text": "Claudeブログでは、<a href=\"https://claude.com/blog/claude-models-explained-choosing-the-best-model-for-your-use-case\">用途に最適なClaudeモデルの選び方や</a>、<a href=\"https://claude.com/blog/claude-model-and-effort-level-in-claude-code\">Claude Codeでのモデルと作業レベルの選定について</a>、さらに詳しく解説しています。",
+          "children": []
+        },
+        {
+          "text": "ドキュメントでは、「<a href=\"https://platform.claude.com/docs/en/about-claude/models/choosing-a-model\">モデルの選択</a>」、「<a href=\"https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence\">コストと知能の最適化</a>」、「<a href=\"https://platform.claude.com/docs/en/build-with-claude/effort\">労力</a>」、Claude Code<a href=\"https://code.claude.com/docs/en/model-config\">モデルの設定</a>、および<a href=\"https://code.claude.com/docs/en/sub-agents\">サブエージェントの項目を</a>参照してください。",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
